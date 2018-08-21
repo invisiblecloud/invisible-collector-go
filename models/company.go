@@ -7,7 +7,7 @@ const (
 	CompanyZipCode              modelField = "zipCode"
 	CompanyCity                 modelField = "city"
 	CompanyCountry              modelField = "country"
-	CompanyGid                  modelField = "gid"
+	CompanyId                   modelField = "gid"
 	CompanyNotificationsEnabled modelField = "notificationsEnabled"
 )
 
@@ -43,36 +43,36 @@ func (c *Company) Address() string {
 	return c.fields[string(CompanyAddress)].(string)
 }
 
-func (c *Company) SetZipCode(ZipCode string) {
-	c.fields[string(CompanyZipCode)] = ZipCode
+func (c *Company) SetZipCode(zipCode string) {
+	c.fields[string(CompanyZipCode)] = zipCode
 }
 
 func (c *Company) ZipCode() string {
 	return c.fields[string(CompanyZipCode)].(string)
 }
 
-func (c *Company) SetCity(City string) {
-	c.fields[string(CompanyCity)] = City
+func (c *Company) SetCity(city string) {
+	c.fields[string(CompanyCity)] = city
 }
 
 func (c *Company) City() string {
 	return c.fields[string(CompanyCity)].(string)
 }
 
-func (c *Company) SetCountry(Country string) {
-	c.fields[string(CompanyCountry)] = Country
+func (c *Company) SetCountry(country string) {
+	c.fields[string(CompanyCountry)] = country
 }
 
 func (c *Company) Country() string {
 	return c.fields[string(CompanyCountry)].(string)
 }
 
-func (c *Company) SetGid(Gid string) {
-	c.fields[string(CompanyGid)] = Gid
+func (c *Company) SetId(gid string) {
+	c.fields[string(CompanyId)] = gid
 }
 
-func (c *Company) Gid() string {
-	return c.fields[string(CompanyGid)].(string)
+func (c *Company) Id() string {
+	return c.fields[string(CompanyId)].(string)
 }
 
 func (c *Company) SetNotificationsEnabled(NotificationsEnabled bool) {

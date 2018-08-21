@@ -1,5 +1,7 @@
 package models
 
+import "encoding/json"
+
 type modelField string
 
 func (m modelField) fieldName() string {
@@ -42,4 +44,14 @@ func (m *model) UnsetField(field fieldNamer) bool {
 
 func (m *model) SetFieldToNull(field fieldNamer) {
 	m.fields[field.fieldName()] = nil
+}
+
+func (m model) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.fields)
+}
+
+func (m *model) UnmarshalJSON(jsonString []byte) (err error) {
+	err = json.Unmarshal(jsonString, &m.fields)
+	m.UnsetNullFields()
+	return err
 }
