@@ -1,4 +1,4 @@
-package invisibleCollector
+package ic
 
 import (
 	"fmt"
