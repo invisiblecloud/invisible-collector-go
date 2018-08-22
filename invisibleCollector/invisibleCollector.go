@@ -40,9 +40,20 @@ func (ic *InvisibleCollector) GetCompany(returnChannel chan<- CompanyPair) {
 	ic.makeCompanyRequest(returnChannel, http.MethodGet, []string{companiesPath}, nil, nil)
 }
 
-func (ic *InvisibleCollector) SetCompany(companyUpdate Company, returnChannel chan<- CompanyPair) {
+func (ic *InvisibleCollector) SetCompany(returnChannel chan<- CompanyPair, companyUpdate Company) {
 
 	ic.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath}, &companyUpdate, []fieldNamer{CompanyName, CompanyVatNumber})
+}
+
+func (ic *InvisibleCollector) SetCompanyNotifications(returnChannel chan<- CompanyPair, enableNotifications bool) {
+	var notificationsPath string
+	if enableNotifications {
+		notificationsPath = "enableNotifications"
+	} else {
+		notificationsPath = "disableNotifications"
+	}
+
+	ic.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath, notificationsPath}, nil, nil)
 }
 
 func (ic *InvisibleCollector) makeCompanyRequest(returnChannel chan<- CompanyPair, requestMethod string, pathFragments []string, requestModel modeler, mandatoryFields []fieldNamer) {
