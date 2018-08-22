@@ -10,11 +10,6 @@ const (
 	companiesPath = "companies"
 )
 
-type modelPair struct {
-	modeler
-	error
-}
-
 type CompanyPair struct {
 	*Company
 	error
