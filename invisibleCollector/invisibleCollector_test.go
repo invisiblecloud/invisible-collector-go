@@ -1,9 +1,8 @@
-package ic
+package invisibleCollector
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/invisiblecloud/invisible-collector-go/models"
 	"testing"
 )
 
@@ -13,10 +12,10 @@ func TestGetCompany(t *testing.T) {
 }
 
 func TestJson(t *testing.T) {
-	c := models.MakeCompany()
+	c := MakeCompany()
 	c.SetAddress("ad")
 	c.SetNotificationsEnabled(true)
-	c.SetFieldToNull(models.CompanyCity)
+	c.SetFieldToNull(CompanyCity)
 
 	j, _ := json.Marshal(c)
 	fmt.Println(string(j))

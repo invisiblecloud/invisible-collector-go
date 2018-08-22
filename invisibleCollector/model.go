@@ -1,4 +1,4 @@
-package models
+package invisibleCollector
 
 import (
 	"encoding/json"

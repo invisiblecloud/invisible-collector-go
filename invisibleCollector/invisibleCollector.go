@@ -1,9 +1,8 @@
-package ic
+package invisibleCollector
 
 import (
 	"encoding/json"
 	"github.com/invisiblecloud/invisible-collector-go/internal"
-	"github.com/invisiblecloud/invisible-collector-go/models"
 	"net/http"
 )
 
@@ -12,7 +11,7 @@ const (
 )
 
 type CompanyPair struct {
-	*models.Company
+	*Company
 	error
 }
 
@@ -39,14 +38,14 @@ func (ic *InvisibleCollector) GetCompany(companies chan<- CompanyPair) {
 		return
 	}
 
-	var company = models.Company{}
+	var company = Company{}
 	err := json.Unmarshal(returnJson, &company)
 	companies <- CompanyPair{&company, err}
 }
 
-func (ic *InvisibleCollector) SetCompany(companyUpdate models.Company, companies chan<- CompanyPair) {
+func (ic *InvisibleCollector) SetCompany(companyUpdate Company, companies chan<- CompanyPair) {
 
-	if fieldErr := companyUpdate.AssertHasFields(models.CompanyName, models.CompanyVatNumber); fieldErr != nil {
+	if fieldErr := companyUpdate.AssertHasFields(CompanyName, CompanyVatNumber); fieldErr != nil {
 		companies <- CompanyPair{nil, fieldErr}
 		return
 	}
@@ -63,7 +62,31 @@ func (ic *InvisibleCollector) SetCompany(companyUpdate models.Company, companies
 		return
 	}
 
-	var company = models.Company{}
+	var company = Company{}
 	err := json.Unmarshal(returnJson, &company)
 	companies <- CompanyPair{&company, err}
 }
+
+//func (ic *InvisibleCollector) makeRequest(requestModel ic.model, ) {
+
+//if fieldErr := companyUpdate.AssertHasFields(ic.CompanyName, ic.CompanyVatNumber); fieldErr != nil {
+//	companies <- CompanyPair{nil, fieldErr}
+//	return
+//}
+//
+//requestJson, marshalErr := json.Marshal(companyUpdate)
+//if marshalErr != nil {
+//	companies <- CompanyPair{nil, marshalErr}
+//	return
+//}
+//
+//returnJson, requestErr := ic.MakeJsonRequest(requestJson, http.MethodPut, companiesPath)
+//if requestErr != nil {
+//	companies <- CompanyPair{nil, requestErr}
+//	return
+//}
+//
+//var company = ic.Company{}
+//err := json.Unmarshal(returnJson, &company)
+//companies <- CompanyPair{&company, err}
+//}

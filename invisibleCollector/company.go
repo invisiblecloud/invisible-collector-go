@@ -1,4 +1,4 @@
-package models
+package invisibleCollector
 
 const (
 	CompanyName                 modelField = "name"
