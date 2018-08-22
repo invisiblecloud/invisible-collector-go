@@ -10,6 +10,11 @@ const (
 	companiesPath = "companies"
 )
 
+type modelPair struct {
+	modeler
+	error
+}
+
 type CompanyPair struct {
 	*Company
 	error
@@ -30,63 +35,43 @@ func NewInvisibleCollector(apiKey string, apiUrl string) (*InvisibleCollector, e
 	return &InvisibleCollector{*requests}, nil
 }
 
-func (ic *InvisibleCollector) GetCompany(companies chan<- CompanyPair) {
-	returnJson, requestErr := ic.MakeJsonRequest(nil, http.MethodGet, companiesPath)
+func (ic *InvisibleCollector) GetCompany(returnChannel chan<- CompanyPair) {
 
-	if requestErr != nil {
-		companies <- CompanyPair{nil, requestErr}
-		return
-	}
-
-	var company = Company{}
-	err := json.Unmarshal(returnJson, &company)
-	companies <- CompanyPair{&company, err}
+	ic.makeCompanyRequest(returnChannel, http.MethodGet, []string{companiesPath}, nil, nil)
 }
 
-func (ic *InvisibleCollector) SetCompany(companyUpdate Company, companies chan<- CompanyPair) {
+func (ic *InvisibleCollector) SetCompany(companyUpdate Company, returnChannel chan<- CompanyPair) {
 
-	if fieldErr := companyUpdate.AssertHasFields(CompanyName, CompanyVatNumber); fieldErr != nil {
-		companies <- CompanyPair{nil, fieldErr}
-		return
-	}
-
-	requestJson, marshalErr := json.Marshal(companyUpdate)
-	if marshalErr != nil {
-		companies <- CompanyPair{nil, marshalErr}
-		return
-	}
-
-	returnJson, requestErr := ic.MakeJsonRequest(requestJson, http.MethodPut, companiesPath)
-	if requestErr != nil {
-		companies <- CompanyPair{nil, requestErr}
-		return
-	}
-
-	var company = Company{}
-	err := json.Unmarshal(returnJson, &company)
-	companies <- CompanyPair{&company, err}
+	ic.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath}, &companyUpdate, []fieldNamer{CompanyName, CompanyVatNumber})
 }
 
-//func (ic *InvisibleCollector) makeRequest(requestModel ic.model, ) {
+func (ic *InvisibleCollector) makeCompanyRequest(returnChannel chan<- CompanyPair, requestMethod string, pathFragments []string, requestModel modeler, mandatoryFields []fieldNamer) {
 
-//if fieldErr := companyUpdate.AssertHasFields(ic.CompanyName, ic.CompanyVatNumber); fieldErr != nil {
-//	companies <- CompanyPair{nil, fieldErr}
-//	return
-//}
-//
-//requestJson, marshalErr := json.Marshal(companyUpdate)
-//if marshalErr != nil {
-//	companies <- CompanyPair{nil, marshalErr}
-//	return
-//}
-//
-//returnJson, requestErr := ic.MakeJsonRequest(requestJson, http.MethodPut, companiesPath)
-//if requestErr != nil {
-//	companies <- CompanyPair{nil, requestErr}
-//	return
-//}
-//
-//var company = ic.Company{}
-//err := json.Unmarshal(returnJson, &company)
-//companies <- CompanyPair{&company, err}
-//}
+	company := Company{}
+	err := ic.makeRequest(&company, requestMethod, pathFragments, requestModel, mandatoryFields)
+	returnChannel <- CompanyPair{&company, err}
+}
+
+func (ic *InvisibleCollector) makeRequest(returnModel modeler, requestMethod string, pathFragments []string, requestModel modeler, mandatoryFields []fieldNamer) error {
+
+	var requestBody []byte = nil
+	if requestModel != nil {
+		if fieldErr := requestModel.AssertHasFields(mandatoryFields); fieldErr != nil {
+			return nil
+		}
+
+		requestJson, marshalErr := json.Marshal(requestModel)
+		if marshalErr != nil {
+			return nil
+		}
+
+		requestBody = requestJson
+	}
+
+	returnJson, requestErr := ic.MakeJsonRequest(requestBody, requestMethod, pathFragments)
+	if requestErr != nil {
+		return nil
+	}
+
+	return json.Unmarshal(returnJson, returnModel)
+}

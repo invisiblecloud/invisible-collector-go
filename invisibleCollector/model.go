@@ -15,6 +15,12 @@ type fieldNamer interface {
 	fieldName() string
 }
 
+type modeler interface {
+	AssertHasFields(requiredFields []fieldNamer) error
+	MarshalJSON() ([]byte, error)
+	UnmarshalJSON(jsonString []byte) (err error)
+}
+
 type model struct {
 	fields map[string]interface{}
 }
@@ -59,7 +65,7 @@ func (m *model) UnmarshalJSON(jsonString []byte) (err error) {
 	return err
 }
 
-func (m *model) AssertHasFields(requiredFields ...fieldNamer) error {
+func (m *model) AssertHasFields(requiredFields []fieldNamer) error {
 	for _, requiredField := range requiredFields {
 		fieldName := requiredField.fieldName()
 		if _, ok := m.fields[fieldName]; !ok {
