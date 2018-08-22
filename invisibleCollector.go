@@ -43,3 +43,27 @@ func (ic *InvisibleCollector) GetCompany(companies chan<- CompanyPair) {
 	err := json.Unmarshal(returnJson, &company)
 	companies <- CompanyPair{&company, err}
 }
+
+func (ic *InvisibleCollector) SetCompany(companyUpdate models.Company, companies chan<- CompanyPair) {
+
+	if fieldErr := companyUpdate.AssertHasFields(models.CompanyName, models.CompanyVatNumber); fieldErr != nil {
+		companies <- CompanyPair{nil, fieldErr}
+		return
+	}
+
+	requestJson, marshalErr := json.Marshal(companyUpdate)
+	if marshalErr != nil {
+		companies <- CompanyPair{nil, marshalErr}
+		return
+	}
+
+	returnJson, requestErr := ic.MakeJsonRequest(requestJson, http.MethodPut, companiesPath)
+	if requestErr != nil {
+		companies <- CompanyPair{nil, requestErr}
+		return
+	}
+
+	var company = models.Company{}
+	err := json.Unmarshal(returnJson, &company)
+	companies <- CompanyPair{&company, err}
+}

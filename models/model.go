@@ -1,6 +1,9 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"errors"
+)
 
 type modelField string
 
@@ -54,4 +57,15 @@ func (m *model) UnmarshalJSON(jsonString []byte) (err error) {
 	err = json.Unmarshal(jsonString, &m.fields)
 	m.UnsetNullFields()
 	return err
+}
+
+func (m *model) AssertHasFields(requiredFields ...fieldNamer) error {
+	for _, requiredField := range requiredFields {
+		fieldName := requiredField.fieldName()
+		if _, ok := m.fields[fieldName]; !ok {
+			return errors.New("Missing field: " + fieldName)
+		}
+	}
+
+	return nil
 }
