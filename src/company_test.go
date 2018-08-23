@@ -2,7 +2,7 @@ package ic
 
 import (
 	"encoding/json"
-	"strings"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -19,73 +19,50 @@ var _ json.Unmarshaler = companyNil
 
 func TestEmptyZeroValues(t *testing.T) {
 	company := MakeCompany()
-	if company.City() != "" {
-		t.Fatalf("Empty model must return default value")
-	}
+	require.Equal(t, "", company.City())
 
-	if company.NotificationsEnabled() != false {
-		t.Fatalf("Empty model must return default value")
-	}
+	require.Equal(t, false, company.NotificationsEnabled())
 }
 
 func TestGettersAndSetters(t *testing.T) {
 	company := MakeCompany()
 	company.SetName(testString1)
 	company.SetCountry(testString2)
-	if company.Name() != testString1 {
-		t.Fail()
-	}
-
-	if company.Country() != testString2 {
-		t.Fail()
-	}
+	require.Equal(t, testString1, company.Name())
+	require.Equal(t, testString2, company.Country())
 }
 
 func TestFieldExists(t *testing.T) {
 	c := MakeCompany()
-	if c.FieldExists(CompanyName) {
-		t.Fail()
-	}
+	require.False(t, c.FieldExists(CompanyName))
 
 	c.SetName("Name")
 
-	if !c.FieldExists(CompanyName) {
-		t.Fail()
-	}
+	require.True(t, c.FieldExists(CompanyName))
 }
 
 func TestSetFieldToNil(t *testing.T) {
 	c := MakeCompany()
 	c.SetName(testString1)
 	c.SetFieldToNil(CompanyName)
-	if c.Name() != "" {
-		t.Fail()
-	}
+	require.Equal(t, "", c.Name())
 }
 
 func TestUnsetField(t *testing.T) {
 	c := MakeCompany()
 	c.SetName(testString1)
 	c.UnsetField(CompanyName)
-	if c.Name() != "" {
-		t.Fail()
-	}
+	require.Equal(t, "", c.Name())
 }
 
 func TestAssertHasFields(t *testing.T) {
 	c := MakeCompany()
-	if c.AssertHasFields([]fieldNamer{}) != nil {
-		t.Fail()
-	}
+	require.Nil(t, c.AssertHasFields([]fieldNamer{}))
 
 	c.SetName(testString1)
-	if c.AssertHasFields([]fieldNamer{CompanyName}) != nil {
-		t.Fail()
-	}
+	require.Nil(t, c.AssertHasFields([]fieldNamer{CompanyName}))
 
-	if c.AssertHasFields([]fieldNamer{CompanyName, CompanyAddress}) == nil {
-		t.Fail()
-	}
+	require.NotEqual(t, nil, c.AssertHasFields([]fieldNamer{CompanyName, CompanyAddress}))
 }
 
 func TestDeepCopy(t *testing.T) {
@@ -93,14 +70,10 @@ func TestDeepCopy(t *testing.T) {
 	c1.SetName(testString1)
 
 	c2 := c1.DeepCopy()
-	if c2.Name() != testString1 {
-		t.Fail()
-	}
+	require.Equal(t, testString1, c2.Name())
 
 	c1.SetName(testString2)
-	if c2.Name() != testString1 {
-		t.Fail()
-	}
+	require.Equal(t, testString1, c2.Name())
 
 }
 
@@ -111,19 +84,16 @@ func TestMarshal(t *testing.T) {
 	c.SetFieldToNil(CompanyCity)
 
 	jsonBytes, err := json.Marshal(c)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.Nil(t, err)
 
 	json := string(jsonBytes)
-	if !(strings.Contains(json, testString1) &&
-		strings.Contains(json, string(CompanyName)) &&
-		strings.Contains(json, testString2) &&
-		strings.Contains(json, string(CompanyAddress)) &&
-		strings.Contains(json, "null") &&
-		strings.Contains(json, string(CompanyCity))) {
-		t.Fail()
-	}
+	require.Contains(t, json, testString1)
+	require.Contains(t, json, string(CompanyName))
+	require.Contains(t, json, testString2)
+	require.Contains(t, json, string(CompanyAddress))
+	require.Contains(t, json, "null")
+	require.Contains(t, json, string(CompanyCity))
+
 }
 
 const companyJson = `
@@ -137,14 +107,10 @@ func TestUnmarshal(t *testing.T) {
 
 	companyJsonBytes := []byte(companyJson)
 	var c Company
-	var m Modeler = &c
-	err := json.Unmarshal(companyJsonBytes, m)
-	if err != nil {
-		t.Fatal(err)
-	}
+	err := json.Unmarshal(companyJsonBytes, &c)
+	require.Nil(t, err)
 
-	if c.Name() != "test-name" || c.FieldExists(CompanyCity) || c.FieldExists(CompanyId) {
-		t.Fail()
-	}
-
+	require.Equal(t, c.Name(), "test-name")
+	require.False(t, c.FieldExists(CompanyCity))
+	require.False(t, c.FieldExists(CompanyId))
 }
