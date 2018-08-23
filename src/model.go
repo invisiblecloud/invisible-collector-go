@@ -15,10 +15,13 @@ type fieldNamer interface {
 	fieldName() string
 }
 
-type modeler interface {
+type Modeler interface {
 	AssertHasFields(requiredFields []fieldNamer) error
 	MarshalJSON() ([]byte, error)
 	UnmarshalJSON(jsonString []byte) (err error)
+	UnsetField(field fieldNamer) bool
+	FieldExists(field fieldNamer) bool
+	SetFieldToNil(field fieldNamer)
 }
 
 type model struct {
@@ -29,16 +32,21 @@ func makeModel() model {
 	return model{make(map[string]interface{})}
 }
 
-func (m *model) UnsetAllFields() {
-	m.fields = make(map[string]interface{})
+func (m *model) deepCopy() model {
+	copy := makeModel()
+	for k, v := range m.fields {
+		copy.fields[k] = v
+	}
+
+	return copy
 }
 
-func (m *model) UnsetNullFields() {
-	for k, v := range m.fields {
-		if v == nil {
-			delete(m.fields, k)
-		}
-	}
+func (m *model) FieldExists(field fieldNamer) bool {
+	return m.getField(field.(modelField)) != nil
+}
+
+func (m *model) SetFieldToNil(field fieldNamer) {
+	m.fields[field.fieldName()] = nil
 }
 
 func (m *model) UnsetField(field fieldNamer) bool {
@@ -51,17 +59,13 @@ func (m *model) UnsetField(field fieldNamer) bool {
 	return false
 }
 
-func (m *model) SetFieldToNull(field fieldNamer) {
-	m.fields[field.fieldName()] = nil
-}
-
 func (m model) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m.fields)
 }
 
 func (m *model) UnmarshalJSON(jsonString []byte) (err error) {
 	err = json.Unmarshal(jsonString, &m.fields)
-	m.UnsetNullFields()
+	m.unsetNullFields()
 	return err
 }
 
@@ -74,4 +78,36 @@ func (m *model) AssertHasFields(requiredFields []fieldNamer) error {
 	}
 
 	return nil
+}
+
+func (m *model) unsetNullFields() {
+	for k, v := range m.fields {
+		if v == nil {
+			delete(m.fields, k)
+		}
+	}
+}
+
+func (m *model) getField(fieldName modelField) interface{} {
+	if v, ok := m.fields[string(fieldName)]; ok {
+		return v
+	}
+
+	return nil
+}
+
+func (m *model) getString(fieldName modelField) string {
+	if v := m.getField(fieldName); v != nil {
+		return v.(string)
+	}
+
+	return ""
+}
+
+func (m *model) getBool(fieldName modelField) bool {
+	if v := m.getField(fieldName); v != nil {
+		return v.(bool)
+	}
+
+	return false
 }

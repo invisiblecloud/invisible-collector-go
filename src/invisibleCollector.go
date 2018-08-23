@@ -11,8 +11,8 @@ const (
 )
 
 type CompanyPair struct {
-	*Company
-	error
+	Company Company
+	Error   error
 }
 
 const IcAddress = "https://api.invisiblecollector.com/"
@@ -51,14 +51,14 @@ func (iC *InvisibleCollector) SetCompanyNotifications(returnChannel chan<- Compa
 	iC.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath, notificationsPath}, nil, nil)
 }
 
-func (iC *InvisibleCollector) makeCompanyRequest(returnChannel chan<- CompanyPair, requestMethod string, pathFragments []string, requestModel modeler, mandatoryFields []fieldNamer) {
+func (iC *InvisibleCollector) makeCompanyRequest(returnChannel chan<- CompanyPair, requestMethod string, pathFragments []string, requestModel Modeler, mandatoryFields []fieldNamer) {
 
 	company := Company{}
 	err := iC.makeRequest(&company, requestMethod, pathFragments, requestModel, mandatoryFields)
-	returnChannel <- CompanyPair{&company, err}
+	returnChannel <- CompanyPair{company, err}
 }
 
-func (iC *InvisibleCollector) makeRequest(returnModel modeler, requestMethod string, pathFragments []string, requestModel modeler, mandatoryFields []fieldNamer) error {
+func (iC *InvisibleCollector) makeRequest(returnModel Modeler, requestMethod string, pathFragments []string, requestModel Modeler, mandatoryFields []fieldNamer) error {
 
 	var requestBody []byte = nil
 	if requestModel != nil {
