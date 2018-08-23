@@ -33,12 +33,12 @@ func makeModel() model {
 }
 
 func (m *model) deepCopy() model {
-	copy := makeModel()
+	clone := makeModel()
 	for k, v := range m.fields {
-		copy.fields[k] = v
+		clone.fields[k] = v
 	}
 
-	return copy
+	return clone
 }
 
 func (m *model) FieldExists(field fieldNamer) bool {

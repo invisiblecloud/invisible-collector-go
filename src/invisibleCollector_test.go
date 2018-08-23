@@ -15,11 +15,11 @@ func TestInvalidUri(t *testing.T) {
 }
 
 func TestInvalidApiKey(t *testing.T) {
-	_, err := NewInvisibleCollector("  \t\n", IcAddress)
+	_, err := NewInvisibleCollector("  \t\n", InvisibleCollectorUri)
 	require.NotNil(t, err)
 }
 
 func TestNew(t *testing.T) {
-	_, err := NewInvisibleCollector(testApiKey, IcAddress)
+	_, err := NewInvisibleCollector(testApiKey, InvisibleCollectorUri)
 	require.Nil(t, err)
 }

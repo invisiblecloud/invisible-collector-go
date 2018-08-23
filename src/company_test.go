@@ -86,13 +86,13 @@ func TestMarshal(t *testing.T) {
 	jsonBytes, err := json.Marshal(c)
 	require.Nil(t, err)
 
-	json := string(jsonBytes)
-	require.Contains(t, json, testString1)
-	require.Contains(t, json, string(CompanyName))
-	require.Contains(t, json, testString2)
-	require.Contains(t, json, string(CompanyAddress))
-	require.Contains(t, json, "null")
-	require.Contains(t, json, string(CompanyCity))
+	jsonString := string(jsonBytes)
+	require.Contains(t, jsonString, testString1)
+	require.Contains(t, jsonString, string(CompanyName))
+	require.Contains(t, jsonString, testString2)
+	require.Contains(t, jsonString, string(CompanyAddress))
+	require.Contains(t, jsonString, "null")
+	require.Contains(t, jsonString, string(CompanyCity))
 
 }
 

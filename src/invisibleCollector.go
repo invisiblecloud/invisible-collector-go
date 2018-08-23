@@ -15,7 +15,7 @@ type CompanyPair struct {
 	Error   error
 }
 
-const IcAddress = "https://api.invisiblecollector.com/"
+const InvisibleCollectorUri = "https://api.invisiblecollector.com/"
 
 type InvisibleCollector struct {
 	internal.ApiRequest
