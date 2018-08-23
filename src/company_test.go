@@ -126,13 +126,14 @@ func TestMarshal(t *testing.T) {
 	}
 }
 
-func TestUnmarshal(t *testing.T) {
-	var companyJson = `
+const companyJson = `
 {
 	"name": "test-name",
 	"city": null
 }
 `
+
+func TestUnmarshal(t *testing.T) {
 
 	companyJsonBytes := []byte(companyJson)
 	var c Company
