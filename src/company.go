@@ -1,4 +1,4 @@
-package models
+package ic
 
 const (
 	CompanyName                 modelField = "name"
@@ -24,7 +24,7 @@ func (c *Company) SetName(name string) {
 }
 
 func (c *Company) Name() string {
-	return c.fields[string(CompanyName)].(string)
+	return c.getString(CompanyName)
 }
 
 func (c *Company) SetVatNumber(vatNumber string) {
@@ -32,7 +32,7 @@ func (c *Company) SetVatNumber(vatNumber string) {
 }
 
 func (c *Company) VatNumber() string {
-	return c.fields[string(CompanyVatNumber)].(string)
+	return c.getString(CompanyVatNumber)
 }
 
 func (c *Company) SetAddress(address string) {
@@ -40,7 +40,7 @@ func (c *Company) SetAddress(address string) {
 }
 
 func (c *Company) Address() string {
-	return c.fields[string(CompanyAddress)].(string)
+	return c.getString(CompanyAddress)
 }
 
 func (c *Company) SetZipCode(zipCode string) {
@@ -48,7 +48,7 @@ func (c *Company) SetZipCode(zipCode string) {
 }
 
 func (c *Company) ZipCode() string {
-	return c.fields[string(CompanyZipCode)].(string)
+	return c.getString(CompanyZipCode)
 }
 
 func (c *Company) SetCity(city string) {
@@ -56,7 +56,7 @@ func (c *Company) SetCity(city string) {
 }
 
 func (c *Company) City() string {
-	return c.fields[string(CompanyCity)].(string)
+	return c.getString(CompanyCity)
 }
 
 func (c *Company) SetCountry(country string) {
@@ -64,21 +64,17 @@ func (c *Company) SetCountry(country string) {
 }
 
 func (c *Company) Country() string {
-	return c.fields[string(CompanyCountry)].(string)
-}
-
-func (c *Company) SetId(gid string) {
-	c.fields[string(CompanyId)] = gid
+	return c.getString(CompanyCountry)
 }
 
 func (c *Company) Id() string {
-	return c.fields[string(CompanyId)].(string)
-}
-
-func (c *Company) SetNotificationsEnabled(NotificationsEnabled bool) {
-	c.fields[string(CompanyNotificationsEnabled)] = NotificationsEnabled
+	return c.getString(CompanyId)
 }
 
 func (c *Company) NotificationsEnabled() bool {
-	return c.fields[string(CompanyNotificationsEnabled)].(bool)
+	return c.getBool(CompanyNotificationsEnabled)
+}
+
+func (c *Company) DeepCopy() Company {
+	return Company{c.deepCopy()}
 }
