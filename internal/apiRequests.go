@@ -58,7 +58,7 @@ func (api *ApiRequest) MakeJsonRequest(requestBody []byte, requestType string, p
 		return nil, api.buildProtocolErrorMessage(response)
 	}
 
-	return readCloseableBuffer(response.Body)
+	return ReadCloseableBuffer(response.Body)
 }
 
 func (api *ApiRequest) joinPathFragments(pathSegments []string) (string, error) {

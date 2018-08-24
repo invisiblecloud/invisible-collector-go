@@ -3,6 +3,7 @@ package ic
 import (
 	"encoding/json"
 	"errors"
+	"github.com/invisiblecloud/invisible-collector-go/internal"
 )
 
 type modelField string
@@ -65,7 +66,7 @@ func (m model) MarshalJSON() ([]byte, error) {
 
 func (m *model) UnmarshalJSON(jsonString []byte) (err error) {
 	err = json.Unmarshal(jsonString, &m.fields)
-	m.unsetNullFields()
+	m.unsetNilFields()
 	return err
 }
 
@@ -80,12 +81,8 @@ func (m *model) AssertHasFields(requiredFields []fieldNamer) error {
 	return nil
 }
 
-func (m *model) unsetNullFields() {
-	for k, v := range m.fields {
-		if v == nil {
-			delete(m.fields, k)
-		}
-	}
+func (m *model) unsetNilFields() {
+	internal.MapRemoveNils(m.fields)
 }
 
 func (m *model) getField(fieldName modelField) interface{} {
