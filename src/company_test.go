@@ -82,6 +82,7 @@ func TestMarshal(t *testing.T) {
 	c.SetName(testString1)
 	c.SetAddress(testString2)
 	c.SetFieldToNil(CompanyCity)
+	c.fields[CompanyNotificationsEnabled.fieldName()] = true
 
 	jsonBytes, err := json.Marshal(c)
 	require.Nil(t, err)
@@ -93,7 +94,8 @@ func TestMarshal(t *testing.T) {
 	require.Contains(t, jsonString, string(CompanyAddress))
 	require.Contains(t, jsonString, "null")
 	require.Contains(t, jsonString, string(CompanyCity))
-
+	require.NotContains(t, jsonString, CompanyNotificationsEnabled.fieldName())
+	require.NotContains(t, jsonString, "true")
 }
 
 const companyJson = `

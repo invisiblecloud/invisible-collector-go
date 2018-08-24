@@ -1,6 +1,7 @@
 package ic
 
 import (
+	"github.com/invisiblecloud/invisible-collector-go/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -23,7 +24,7 @@ func (p requestPair) buildFromCompanyPair(cp CompanyPair) requestPair {
 	return requestPair{cp.Error, cp.Company.model}
 }
 
-func buildAssertingTestServerRequest(t *testing.T, returnJson string, expectedMethod string, expectedUriPath string, expectedJson interface{}) *httptest.Server {
+func buildAssertingTestServerRequest(t *testing.T, returnJson string, expectedMethod string, expectedUriPath string, expectedJsonBits []string) *httptest.Server {
 	const jsonMime = "application/json"
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -34,10 +35,16 @@ func buildAssertingTestServerRequest(t *testing.T, returnJson string, expectedMe
 		assert.Contains(t, r.Header.Get("Authorization"), "Bearer")
 		assert.Contains(t, r.Header.Get("Authorization"), testApiKey)
 
-		if expectedJson != nil {
-
+		if expectedJsonBits != nil {
 			assert.Contains(t, r.Header.Get("Content-Type"), jsonMime)
 			assert.Contains(t, r.Header.Get("Content-Type"), "utf-8")
+
+			bodyBytes, _ := internal.ReadCloseableBuffer(r.Body)
+			bodyString := string(bodyBytes)
+			for _, js := range expectedJsonBits {
+				assert.Contains(t, bodyString, js)
+			}
+
 		} else {
 			assert.NotContains(t, r.Header.Get("Content-Type"), jsonMime)
 		}
@@ -93,13 +100,54 @@ func TestNew(t *testing.T) {
 
 func TestGetCompany(t *testing.T) {
 
-	builder := buildTestompanyModelBuilder()
+	builder := buildTestCompanyModelBuilder()
 	jsonStr := builder.buildJson()
-	expectedModel := builder.buildModel()
+	returnModel := builder.buildReturnModel()
 
 	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", "/companies", nil)
 	defer ts.Close()
 
-	assertCompanyRequest(t, ts.URL, expectedModel,
+	assertCompanyRequest(t, ts.URL, returnModel,
 		func(collector *InvisibleCollector, ch chan CompanyPair) { collector.GetCompany(ch) })
+}
+
+func TestSetCompany(t *testing.T) {
+
+	builder := buildTestCompanyModelBuilder()
+	jsonStr := builder.buildJson()
+	returnModel := builder.buildReturnModel()
+	requestModel := Company{builder.buildRequestModel()}
+	fragments := builder.getRequestJsonBits()
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", "/companies", fragments)
+	defer ts.Close()
+
+	assertCompanyRequest(t, ts.URL, returnModel,
+		func(collector *InvisibleCollector, ch chan CompanyPair) { collector.SetCompany(ch, requestModel) })
+}
+
+func TestSetCompanyNotificationsEnable(t *testing.T) {
+
+	builder := buildTestCompanyModelBuilder()
+	jsonStr := builder.buildJson()
+	returnModel := builder.buildReturnModel()
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", "/companies/enableNotifications", nil)
+	defer ts.Close()
+
+	assertCompanyRequest(t, ts.URL, returnModel,
+		func(collector *InvisibleCollector, ch chan CompanyPair) { collector.SetCompanyNotifications(ch, true) })
+}
+
+func TestSetCompanyNotificationsDisable(t *testing.T) {
+
+	builder := buildTestCompanyModelBuilder()
+	jsonStr := builder.buildJson()
+	returnModel := builder.buildReturnModel()
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", "/companies/disableNotifications", nil)
+	defer ts.Close()
+
+	assertCompanyRequest(t, ts.URL, returnModel,
+		func(collector *InvisibleCollector, ch chan CompanyPair) { collector.SetCompanyNotifications(ch, false) })
 }

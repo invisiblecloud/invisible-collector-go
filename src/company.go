@@ -81,7 +81,7 @@ func (c *Company) DeepCopy() Company {
 	return Company{c.deepCopy()}
 }
 
-func (c *Company) MarshalJSON() ([]byte, error) {
-	m := internal.MapSubmap(c.fields, string(CompanyName), string(CompanyVatNumber), string(CompanyAddress), string(CompanyZipCode), string(CompanyCity))
+func (c Company) MarshalJSON() ([]byte, error) {
+	m := internal.MapSubmap(c.fields, string(CompanyName), string(CompanyVatNumber), string(CompanyAddress), string(CompanyZipCode), string(CompanyCity), string(CompanyCountry))
 	return model{m}.MarshalJSON()
 }

@@ -26,13 +26,29 @@ func (m *testModelBuilder) buildJson() string {
 	return string(j)
 }
 
-func (m *testModelBuilder) buildModel() model {
+func (m *testModelBuilder) getRequestJsonBits() []string {
+
+	ss := make([]string, 0)
+	for k, v := range m.fields {
+		vj, _ := json.Marshal(v)
+		ss = append(ss, k, string(vj))
+	}
+
+	return ss
+}
+
+func (m *testModelBuilder) buildReturnModel() model {
 	fieldsCopy := internal.MapCopy(m.fields)
 	internal.MapRemoveNils(fieldsCopy)
 	return model{fieldsCopy}
 }
 
-func buildTestompanyModelBuilder() *testModelBuilder {
+func (m *testModelBuilder) buildRequestModel() model {
+	fieldsCopy := internal.MapCopy(m.fields)
+	return model{fieldsCopy}
+}
+
+func buildTestCompanyModelBuilder() *testModelBuilder {
 	m := makeTestModelBuilder()
 
 	m.addField("name", "test-name")

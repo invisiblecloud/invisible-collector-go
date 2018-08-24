@@ -94,7 +94,7 @@ func (api *ApiRequest) buildRequest(requestType string, pathSegments []string, r
 	request.Header.Set("Accept", jsonMime)
 	request.Header.Set("Authorization", "Bearer "+api.apiKey)
 	if requestBody != nil && len(requestBody) != 0 {
-		request.Header.Set("Content-Type", jsonMime+"; charset=UTF-8")
+		request.Header.Set("Content-Type", jsonMime+"; charset=utf-8")
 	}
 
 	return request, nil
