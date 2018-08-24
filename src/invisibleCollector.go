@@ -2,7 +2,6 @@ package ic
 
 import (
 	"encoding/json"
-	"github.com/invisiblecloud/invisible-collector-go/internal"
 	"net/http"
 )
 
@@ -18,11 +17,11 @@ type CompanyPair struct {
 const InvisibleCollectorUri = "https://api.invisiblecollector.com/"
 
 type InvisibleCollector struct {
-	internal.ApiRequest
+	apiRequest
 }
 
 func NewInvisibleCollector(apiKey string, apiUrl string) (*InvisibleCollector, error) {
-	requests, err := internal.NewApiRequests(apiKey, apiUrl)
+	requests, err := newApiRequest(apiKey, apiUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -63,20 +62,20 @@ func (iC *InvisibleCollector) makeRequest(returnModel Modeler, requestMethod str
 	var requestBody []byte = nil
 	if requestModel != nil {
 		if fieldErr := requestModel.AssertHasFields(mandatoryFields); fieldErr != nil {
-			return nil
+			return fieldErr
 		}
 
 		requestJson, marshalErr := json.Marshal(requestModel)
 		if marshalErr != nil {
-			return nil
+			return marshalErr
 		}
 
 		requestBody = requestJson
 	}
 
-	returnJson, requestErr := iC.MakeJsonRequest(requestBody, requestMethod, pathFragments)
+	returnJson, requestErr := iC.makeJsonRequest(requestBody, requestMethod, pathFragments)
 	if requestErr != nil {
-		return nil
+		return requestErr
 	}
 
 	return json.Unmarshal(returnJson, returnModel)

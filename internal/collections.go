@@ -29,3 +29,21 @@ func MapSubmap(m map[string]interface{}, fields ...string) map[string]interface{
 
 	return mapCopy
 }
+
+func MapGetValue(m map[string]interface{}, key string) interface{} {
+	if v, ok := m[key]; ok {
+		return v
+	}
+
+	return nil
+}
+
+func SliceFirstNonNil(values ...interface{}) interface{} {
+	for _, v := range values {
+		if v != nil {
+			return v
+		}
+	}
+
+	return nil
+}

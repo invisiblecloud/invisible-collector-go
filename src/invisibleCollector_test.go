@@ -24,6 +24,19 @@ func (p requestPair) buildFromCompanyPair(cp CompanyPair) requestPair {
 	return requestPair{cp.Error, cp.Company.model}
 }
 
+func buildBarebonesTestServerRequest(statusCode int, useContentTypeHeader bool, returnJson string) *httptest.Server {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if useContentTypeHeader {
+			w.Header().Set("Content-Type", "application/json")
+		}
+		w.WriteHeader(statusCode)
+		io.WriteString(w, returnJson)
+	})
+
+	return httptest.NewServer(handler)
+}
+
 func buildAssertingTestServerRequest(t *testing.T, returnJson string, expectedMethod string, expectedUriPath string, expectedJsonBits []string) *httptest.Server {
 	const jsonMime = "application/json"
 
@@ -150,4 +163,85 @@ func TestSetCompanyNotificationsDisable(t *testing.T) {
 
 	assertCompanyRequest(t, ts.URL, returnModel,
 		func(collector *InvisibleCollector, ch chan CompanyPair) { collector.SetCompanyNotifications(ch, false) })
+}
+
+func TestErrorNotJsonResponse(t *testing.T) {
+	json := "{}"
+
+	ts := buildBarebonesTestServerRequest(200, false, json)
+	defer ts.Close()
+
+	collector := buildCollector(t, ts.URL)
+	ch := make(chan CompanyPair)
+	go collector.GetCompany(ch)
+	p := <-ch
+
+	require.NotNil(t, p.Error)
+}
+
+func TestErrorBadJsonResponse(t *testing.T) {
+	json := "/.;'\\"
+
+	ts := buildBarebonesTestServerRequest(200, true, json)
+	defer ts.Close()
+
+	collector := buildCollector(t, ts.URL)
+	ch := make(chan CompanyPair)
+	go collector.GetCompany(ch)
+	p := <-ch
+
+	require.NotNil(t, p.Error)
+}
+
+func TestErrorNot200NotJson(t *testing.T) {
+	msg := "an error occured"
+
+	ts := buildBarebonesTestServerRequest(401, false, msg)
+	defer ts.Close()
+
+	collector := buildCollector(t, ts.URL)
+	ch := make(chan CompanyPair)
+	go collector.GetCompany(ch)
+	p := <-ch
+
+	require.NotNil(t, p.Error)
+}
+
+func TestErrorNot200JsonError(t *testing.T) {
+	const json = `{
+	"code": "401",
+	"message": "testing"
+}`
+
+	ts := buildBarebonesTestServerRequest(401, true, json)
+	defer ts.Close()
+
+	collector := buildCollector(t, ts.URL)
+	ch := make(chan CompanyPair)
+	go collector.GetCompany(ch)
+	p := <-ch
+
+	require.NotNil(t, p.Error)
+	assert.Contains(t, p.Error.Error(), "401")
+	assert.Contains(t, p.Error.Error(), "testing")
+}
+
+func TestErrorNot200ConflictError(t *testing.T) {
+	const json = `{
+	"code": "409",
+	"message": "testing",
+	"gid": "conflict"
+}`
+
+	ts := buildBarebonesTestServerRequest(409, true, json)
+	defer ts.Close()
+
+	collector := buildCollector(t, ts.URL)
+	ch := make(chan CompanyPair)
+	go collector.GetCompany(ch)
+	p := <-ch
+
+	require.NotNil(t, p.Error)
+	assert.Contains(t, p.Error.Error(), "conflict")
+
 }

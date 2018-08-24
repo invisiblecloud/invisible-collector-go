@@ -86,11 +86,7 @@ func (m *model) unsetNilFields() {
 }
 
 func (m *model) getField(fieldName modelField) interface{} {
-	if v, ok := m.fields[string(fieldName)]; ok {
-		return v
-	}
-
-	return nil
+	return internal.MapGetValue(m.fields, string(fieldName))
 }
 
 func (m *model) getString(fieldName modelField) string {
