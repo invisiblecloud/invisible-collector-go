@@ -110,3 +110,12 @@ func (c *Customer) Id() string {
 func (c *Customer) SetId(id string) {
 	c.fields[string(CustomerId)] = id
 }
+
+func (c *Customer) RoutableId() string {
+	id := c.Id()
+	if id == "" {
+		return c.ExternalId()
+	}
+
+	return id
+}

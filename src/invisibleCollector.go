@@ -7,11 +7,17 @@ import (
 
 const (
 	companiesPath = "companies"
+	customersPath = "customers"
 )
 
 type CompanyPair struct {
 	Company Company
 	Error   error
+}
+
+type CustomerPair struct {
+	Customer Customer
+	Error    error
 }
 
 const InvisibleCollectorUri = "https://api.invisiblecollector.com/"
@@ -48,6 +54,25 @@ func (iC *InvisibleCollector) SetCompanyNotifications(returnChannel chan<- Compa
 	}
 
 	iC.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath, notificationsPath}, nil, nil)
+}
+
+func (iC *InvisibleCollector) SetNewCustomer(returnChannel chan<- CustomerPair, newCustomer Customer) {
+	iC.makeCustomerRequest(returnChannel, http.MethodPost, []string{customersPath}, &newCustomer, []fieldNamer{CustomerName, CustomerVatNumber, CustomerCountry})
+}
+
+func (iC *InvisibleCollector) SetCustomer(returnChannel chan<- CustomerPair, updatedCustomer Customer) {
+	iC.makeCustomerRequest(returnChannel, http.MethodPut, []string{customersPath, updatedCustomer.RoutableId()}, &updatedCustomer, []fieldNamer{CustomerCountry})
+}
+
+func (iC *InvisibleCollector) GetCustomer(returnChannel chan<- CustomerPair, customerId string) {
+	iC.makeCustomerRequest(returnChannel, http.MethodGet, []string{customersPath, customerId}, nil, nil)
+}
+
+func (iC *InvisibleCollector) makeCustomerRequest(returnChannel chan<- CustomerPair, requestMethod string, pathFragments []string, requestModel Modeler, mandatoryFields []fieldNamer) {
+
+	customer := Customer{}
+	err := iC.makeRequest(&customer, requestMethod, pathFragments, requestModel, mandatoryFields)
+	returnChannel <- CustomerPair{customer, err}
 }
 
 func (iC *InvisibleCollector) makeCompanyRequest(returnChannel chan<- CompanyPair, requestMethod string, pathFragments []string, requestModel Modeler, mandatoryFields []fieldNamer) {
