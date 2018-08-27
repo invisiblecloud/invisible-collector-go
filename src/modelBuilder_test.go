@@ -5,6 +5,15 @@ import (
 	"github.com/invisiblecloud/invisible-collector-go/internal"
 )
 
+func BuildJson(source interface{}) string {
+	j, err := json.Marshal(source)
+	if err != nil {
+		panic(err)
+	}
+
+	return string(j)
+}
+
 type testModelBuilder struct {
 	fields map[string]interface{}
 }
@@ -18,12 +27,7 @@ func (m *testModelBuilder) addField(key string, value interface{}) {
 }
 
 func (m *testModelBuilder) buildJson() string {
-	j, err := json.Marshal(m.fields)
-	if err != nil {
-		panic(err)
-	}
-
-	return string(j)
+	return BuildJson(m.fields)
 }
 
 func (m *testModelBuilder) getRequestJsonBits(excludeKeys ...string) []string {

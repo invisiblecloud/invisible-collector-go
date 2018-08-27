@@ -75,6 +75,7 @@ func (iC *InvisibleCollector) GetCustomer(returnChannel chan<- CustomerPair, cus
 }
 
 func (iC *InvisibleCollector) SetCustomerAttributes(returnChannel chan<- AttributesPair, customerId string, attributes map[string]string) {
+
 	iC.makeAttributesRequest(returnChannel, http.MethodPost, []string{customersPath, customerId, customerAttributesPath}, attributes)
 }
 
@@ -83,9 +84,14 @@ func (iC *InvisibleCollector) GetCustomerAttributes(returnChannel chan<- Attribu
 }
 
 func (iC *InvisibleCollector) makeAttributesRequest(returnChannel chan<- AttributesPair, requestMethod string, pathFragments []string, requestAttributes map[string]string) {
-
 	attributes := make(map[string]string)
-	err := iC.makeRequest(&attributes, requestMethod, pathFragments, requestAttributes)
+	var err error
+	if len(requestAttributes) == 0 {
+		err = iC.makeRequest(&attributes, requestMethod, pathFragments, nil)
+	} else {
+		err = iC.makeRequest(&attributes, requestMethod, pathFragments, requestAttributes)
+	}
+
 	returnChannel <- AttributesPair{attributes, err}
 }
 

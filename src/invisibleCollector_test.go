@@ -78,7 +78,7 @@ func buildCollector(t *testing.T, baseUri string) *InvisibleCollector {
 	return collector
 }
 
-func assertCorrectReturnedModel(t *testing.T, expected model, actual model, returnedErr error) {
+func assertCorrectReturnedData(t *testing.T, expected interface{}, actual interface{}, returnedErr error) {
 	if !reflect.DeepEqual(expected, actual) {
 		t.Fatalf("Models must be the same: \n expected: %v \n actual: %v", expected, actual)
 	}
@@ -93,7 +93,7 @@ func assertCompanyRequest(t *testing.T, baseUri string, expectedModel model, met
 	go method(collector, ch)
 	p := <-ch
 
-	assertCorrectReturnedModel(t, expectedModel, p.Company.model, p.Error)
+	assertCorrectReturnedData(t, expectedModel, p.Company.model, p.Error)
 }
 
 func assertCustomerRequest(t *testing.T, baseUri string, expectedModel model, method func(collector *InvisibleCollector, ch chan CustomerPair)) {
@@ -103,7 +103,17 @@ func assertCustomerRequest(t *testing.T, baseUri string, expectedModel model, me
 	go method(collector, ch)
 	p := <-ch
 
-	assertCorrectReturnedModel(t, expectedModel, p.Customer.model, p.Error)
+	assertCorrectReturnedData(t, expectedModel, p.Customer.model, p.Error)
+}
+
+func assertCustomerAttributesRequest(t *testing.T, baseUri string, expectedAttributes map[string]string, method func(collector *InvisibleCollector, ch chan AttributesPair)) {
+
+	collector := buildCollector(t, baseUri)
+	ch := make(chan AttributesPair)
+	go method(collector, ch)
+	p := <-ch
+
+	assertCorrectReturnedData(t, expectedAttributes, p.Attributes, p.Error)
 }
 
 func TestInvalidUri(t *testing.T) {
@@ -297,4 +307,39 @@ func TestSetCustomer(t *testing.T) {
 
 	assertCustomerRequest(t, ts.URL, returnModel,
 		func(collector *InvisibleCollector, ch chan CustomerPair) { collector.SetCustomer(ch, requestModel) })
+}
+
+func TestGetCustomerAttributes(t *testing.T) {
+	const id = "adad"
+
+	attributes := map[string]string{
+		"go-attr-1": "go-val-1",
+		"go-attr-2": "go-val-2",
+	}
+	jsonStr := BuildJson(attributes)
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", "/customers/"+id+"/attributes", nil)
+	defer ts.Close()
+
+	assertCustomerAttributesRequest(t, ts.URL, attributes,
+		func(collector *InvisibleCollector, ch chan AttributesPair) { collector.GetCustomerAttributes(ch, id) })
+}
+
+func TestSetCustomerAttributes(t *testing.T) {
+	const id = "adad"
+
+	attributes := map[string]string{
+		"go-attr-1": "go-val-1",
+		"go-attr-2": "go-val-2",
+	}
+	jsonStr := BuildJson(attributes)
+	jsonBits := []string{"go-attr-1", "go-val-1", "go-attr-2", "go-val-2"}
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "POST", "/customers/"+id+"/attributes", jsonBits)
+	defer ts.Close()
+
+	assertCustomerAttributesRequest(t, ts.URL, attributes,
+		func(collector *InvisibleCollector, ch chan AttributesPair) {
+			collector.SetCustomerAttributes(ch, id, attributes)
+		})
 }
