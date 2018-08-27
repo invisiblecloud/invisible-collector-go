@@ -77,7 +77,7 @@ func TestDeepCopy(t *testing.T) {
 
 }
 
-func TestMarshal(t *testing.T) {
+func TestCompanyMarshal(t *testing.T) {
 	c := MakeCompany()
 	c.SetName(testString1)
 	c.SetAddress(testString2)
