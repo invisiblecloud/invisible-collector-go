@@ -19,5 +19,18 @@ func TestCustomerMarshal(t *testing.T) {
 	require.Contains(t, jsonString, string(CustomerName))
 	require.NotContains(t, jsonString, testString2)
 	require.NotContains(t, jsonString, string(CustomerId))
+}
+
+func TestCustomerRoutableId(t *testing.T) {
+	c := MakeCustomer()
+
+	c.SetId("1")
+	require.Equal(t, "1", c.RoutableId())
+
+	c.SetExternalId("2")
+	require.Equal(t, "1", c.RoutableId())
+
+	c.UnsetField(CustomerId)
+	require.Equal(t, "2", c.RoutableId())
 
 }
