@@ -14,7 +14,7 @@ type ConflictError struct {
 }
 
 func (e ConflictError) Error() string {
-	return e.Msg + "(conflicting id: " + e.ConflictId + ")"
+	return e.Msg + " (conflicting id: " + e.ConflictId + ")"
 }
 
 type HttpStatusCodeError int
