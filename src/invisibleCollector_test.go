@@ -96,6 +96,16 @@ func assertCompanyRequest(t *testing.T, baseUri string, expectedModel model, met
 	assertCorrectReturnedModel(t, expectedModel, p.Company.model, p.Error)
 }
 
+func assertCustomerRequest(t *testing.T, baseUri string, expectedModel model, method func(collector *InvisibleCollector, ch chan CustomerPair)) {
+
+	collector := buildCollector(t, baseUri)
+	ch := make(chan CustomerPair)
+	go method(collector, ch)
+	p := <-ch
+
+	assertCorrectReturnedModel(t, expectedModel, p.Customer.model, p.Error)
+}
+
 func TestInvalidUri(t *testing.T) {
 	_, err := NewInvisibleCollector(testApiKey, "ftp://123.23.23.23")
 	require.NotNil(t, err)
@@ -244,4 +254,47 @@ func TestErrorNot200ConflictError(t *testing.T) {
 	require.NotNil(t, p.Error)
 	assert.Contains(t, p.Error.Error(), "conflict")
 
+}
+
+func TestGetCustomer(t *testing.T) {
+
+	builder, id := buildTestCustomerModelBuilder()
+	jsonStr := builder.buildJson()
+	returnModel := builder.buildReturnModel()
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", "/customers/"+id, nil)
+	defer ts.Close()
+
+	assertCustomerRequest(t, ts.URL, returnModel,
+		func(collector *InvisibleCollector, ch chan CustomerPair) { collector.GetCustomer(ch, id) })
+}
+
+func TestSetNewCustomer(t *testing.T) {
+
+	builder, _ := buildTestCustomerModelBuilder()
+	jsonStr := builder.buildJson()
+	returnModel := builder.buildReturnModel()
+	requestModel := Customer{builder.buildRequestModel()}
+	fragments := builder.getRequestJsonBits("gid")
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "POST", "/customers", fragments)
+	defer ts.Close()
+
+	assertCustomerRequest(t, ts.URL, returnModel,
+		func(collector *InvisibleCollector, ch chan CustomerPair) { collector.SetNewCustomer(ch, requestModel) })
+}
+
+func TestSetCustomer(t *testing.T) {
+
+	builder, id := buildTestCustomerModelBuilder()
+	jsonStr := builder.buildJson()
+	returnModel := builder.buildReturnModel()
+	requestModel := Customer{builder.buildRequestModel()}
+	fragments := builder.getRequestJsonBits("gid")
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", "/customers/"+id, fragments)
+	defer ts.Close()
+
+	assertCustomerRequest(t, ts.URL, returnModel,
+		func(collector *InvisibleCollector, ch chan CustomerPair) { collector.SetCustomer(ch, requestModel) })
 }

@@ -26,10 +26,15 @@ func (m *testModelBuilder) buildJson() string {
 	return string(j)
 }
 
-func (m *testModelBuilder) getRequestJsonBits() []string {
+func (m *testModelBuilder) getRequestJsonBits(excludeKeys ...string) []string {
+
+	clone := internal.MapCopy(m.fields)
+	for _, key := range excludeKeys {
+		delete(clone, key)
+	}
 
 	ss := make([]string, 0)
-	for k, v := range m.fields {
+	for k, v := range clone {
 		vj, _ := json.Marshal(v)
 		ss = append(ss, k, string(vj))
 	}
@@ -56,4 +61,17 @@ func buildTestCompanyModelBuilder() *testModelBuilder {
 	m.addField("city", nil)
 
 	return m
+}
+
+func buildTestCustomerModelBuilder() (m *testModelBuilder, id string) {
+	m = makeTestModelBuilder()
+
+	id = "adad"
+	m.addField("name", "test-name")
+	m.addField("vatNumber", "1234")
+	m.addField("country", "PT")
+	m.addField("city", nil)
+	m.addField("gid", id)
+
+	return
 }
