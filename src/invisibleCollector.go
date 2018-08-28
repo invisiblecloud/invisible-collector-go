@@ -9,6 +9,7 @@ const (
 	companiesPath          = "companies"
 	customersPath          = "customers"
 	customerAttributesPath = "attributes"
+	customerDebtsPath      = "debts"
 	debtsPath              = "debts"
 	InvisibleCollectorUri  = "https://api.invisiblecollector.com/"
 )
@@ -30,6 +31,11 @@ type AttributesPair struct {
 
 type DebtPair struct {
 	Debt  Debt
+	Error error
+}
+
+type DebtListPair struct {
+	Debts []Debt
 	Error error
 }
 
@@ -94,6 +100,13 @@ func (iC *InvisibleCollector) SetNewDebt(returnChannel chan<- DebtPair, newDebt 
 
 func (iC *InvisibleCollector) GetDebt(returnChannel chan<- DebtPair, debtId string) {
 	iC.makeDebtRequest(returnChannel, http.MethodGet, []string{debtsPath, debtId}, nil, nil, nil)
+}
+
+func (iC *InvisibleCollector) GetCustomerDebts(returnChannel chan<- DebtListPair, customerId string) {
+
+	debts := make([]Debt, 0)
+	err := iC.makeRequest(&debts, http.MethodGet, []string{customersPath, customerId, customerDebtsPath}, nil)
+	returnChannel <- DebtListPair{debts, err}
 }
 
 func (iC *InvisibleCollector) makeDebtRequest(returnChannel chan<- DebtPair, requestMethod string, pathFragments []string, requestDebt *Debt, debtMandatoryFields []fieldNamer, itemsMandatoryFields []fieldNamer) {
