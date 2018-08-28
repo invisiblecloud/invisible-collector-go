@@ -78,6 +78,8 @@ func (d *Debt) UnmarshalJSON(jsonString []byte) error {
 			item.unsetNilFields()
 			items[i] = item
 		}
+
+		d.fields[string(DebtItems)] = items
 	}
 
 	return nil
