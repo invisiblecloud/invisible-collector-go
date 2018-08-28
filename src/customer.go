@@ -22,7 +22,7 @@ func MakeCustomer() Customer {
 }
 
 func (c *Customer) DeepCopy() Customer {
-	return Customer{c.deepCopy()}
+	return Customer{c.shallowCopy()}
 }
 
 func (c Customer) MarshalJSON() ([]byte, error) {

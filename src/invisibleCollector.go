@@ -9,6 +9,8 @@ const (
 	companiesPath          = "companies"
 	customersPath          = "customers"
 	customerAttributesPath = "attributes"
+	debtsPath              = "debts"
+	InvisibleCollectorUri  = "https://api.invisiblecollector.com/"
 )
 
 type CompanyPair struct {
@@ -26,7 +28,10 @@ type AttributesPair struct {
 	Error      error
 }
 
-const InvisibleCollectorUri = "https://api.invisiblecollector.com/"
+type DebtPair struct {
+	Debt  Debt
+	Error error
+}
 
 type InvisibleCollector struct {
 	apiRequest
@@ -81,6 +86,33 @@ func (iC *InvisibleCollector) SetCustomerAttributes(returnChannel chan<- Attribu
 
 func (iC *InvisibleCollector) GetCustomerAttributes(returnChannel chan<- AttributesPair, customerId string) {
 	iC.makeAttributesRequest(returnChannel, http.MethodGet, []string{customersPath, customerId, customerAttributesPath}, nil)
+}
+
+func (iC *InvisibleCollector) SetNewDebt(returnChannel chan<- DebtPair, newDebt Debt) {
+	iC.makeDebtRequest(returnChannel, http.MethodPost, []string{debtsPath}, &newDebt, []fieldNamer{DebtNumber, DebtCustomerId, DebtType, DebtDate, DebtDueDate}, []fieldNamer{ItemName})
+}
+
+func (iC *InvisibleCollector) GetDebt(returnChannel chan<- DebtPair, debtId string) {
+	iC.makeDebtRequest(returnChannel, http.MethodGet, []string{debtsPath, debtId}, nil, nil, nil)
+}
+
+func (iC *InvisibleCollector) makeDebtRequest(returnChannel chan<- DebtPair, requestMethod string, pathFragments []string, requestDebt *Debt, debtMandatoryFields []fieldNamer, itemsMandatoryFields []fieldNamer) {
+
+	if requestDebt != nil && len(itemsMandatoryFields) != 0 {
+		if err := requestDebt.AssertItemsHaveFields(itemsMandatoryFields); err != nil {
+			returnChannel <- DebtPair{Debt{}, nil}
+			return
+		}
+	}
+
+	var requestModel Modeler = nil
+	if requestDebt != nil {
+		requestModel = requestDebt
+	}
+
+	debt := Debt{}
+	err := iC.makeModelRequest(&debt, requestMethod, pathFragments, requestModel, debtMandatoryFields)
+	returnChannel <- DebtPair{debt, err}
 }
 
 func (iC *InvisibleCollector) makeAttributesRequest(returnChannel chan<- AttributesPair, requestMethod string, pathFragments []string, requestAttributes map[string]string) {

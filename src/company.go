@@ -78,7 +78,7 @@ func (c *Company) NotificationsEnabled() bool {
 }
 
 func (c *Company) DeepCopy() Company {
-	return Company{c.deepCopy()}
+	return Company{c.shallowCopy()}
 }
 
 func (c Company) MarshalJSON() ([]byte, error) {
