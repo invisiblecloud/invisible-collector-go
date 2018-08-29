@@ -381,3 +381,26 @@ func TestGetDebt(t *testing.T) {
 	assertDebtRequest(t, ts.URL, expectedReturnModel,
 		func(collector *InvisibleCollector, ch chan DebtPair) { collector.GetDebt(ch, id) })
 }
+
+func TestGetCustomerDebts(t *testing.T) {
+
+	builder, _ := buildTestDebtModelBuilder()
+	jsonDebt1 := builder.buildDebtJson()
+	expectedDebt1 := Debt{builder.buildDebtReturnModel()}
+
+	builder2, customerId := buildTestAnotherDebtModelBuilder()
+	jsonDebt2 := builder2.buildDebtJson()
+	expectedDebt2 := Debt{builder2.buildDebtReturnModel()}
+
+	jsonStr := "[" + jsonDebt1 + "," + jsonDebt2 + "]"
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", "/customers/"+customerId+"/debts", nil)
+	defer ts.Close()
+
+	collector := buildCollector(t, ts.URL)
+	ch := make(chan DebtListPair)
+	go collector.GetCustomerDebts(ch, customerId)
+	p := <-ch
+
+	assertCorrectReturnedData(t, []Debt{expectedDebt1, expectedDebt2}, p.Debts, p.Error)
+}

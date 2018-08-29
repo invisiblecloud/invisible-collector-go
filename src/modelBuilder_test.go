@@ -23,7 +23,7 @@ func makeTestModelBuilder() *testModelBuilder {
 	return &testModelBuilder{make(map[string]interface{})}
 }
 
-func (m *testModelBuilder) addField(key string, value interface{}) {
+func (m *testModelBuilder) setField(key string, value interface{}) {
 	m.fields[key] = value
 }
 
@@ -118,9 +118,9 @@ func (m *testModelBuilder) buildRequestModel() model {
 func buildTestCompanyModelBuilder() *testModelBuilder {
 	m := makeTestModelBuilder()
 
-	m.addField(string(CompanyName), "test-name")
-	m.addField(string(CompanyVatNumber), "1234")
-	m.addField(string(CompanyCity), nil)
+	m.setField(string(CompanyName), "test-name")
+	m.setField(string(CompanyVatNumber), "1234")
+	m.setField(string(CompanyCity), nil)
 
 	return m
 }
@@ -129,11 +129,11 @@ func buildTestCustomerModelBuilder() (m *testModelBuilder, id string) {
 	m = makeTestModelBuilder()
 
 	id = "adad"
-	m.addField(string(CustomerName), "test-name")
-	m.addField(string(CustomerVatNumber), "1234")
-	m.addField(string(CustomerCountry), "PT")
-	m.addField(string(CustomerCity), nil)
-	m.addField(string(CustomerId), id)
+	m.setField(string(CustomerName), "test-name")
+	m.setField(string(CustomerVatNumber), "1234")
+	m.setField(string(CustomerCountry), "PT")
+	m.setField(string(CustomerCity), nil)
+	m.setField(string(CustomerId), id)
 
 	return
 }
@@ -142,24 +142,33 @@ func buildTestDebtModelBuilder() (m *testModelBuilder, id string) {
 	m = makeTestModelBuilder()
 
 	id = "adad"
-	m.addField(string(DebtNumber), "1")
-	m.addField(string(DebtId), id)
-	m.addField(string(DebtCustomerId), "ffff")
-	m.addField(string(DebtType), "FT")
-	m.addField(string(DebtGrossTotal), 100.1)
+	m.setField(string(DebtNumber), "1")
+	m.setField(string(DebtId), id)
+	m.setField(string(DebtCustomerId), "ffff")
+	m.setField(string(DebtType), "FT")
+	m.setField(string(DebtGrossTotal), 100.1)
 	date := time.Date(2015, 02, 01, 0, 0, 0, 0, time.UTC)
-	m.addField(string(DebtDate), date)
-	m.addField(string(DebtDueDate), date.AddDate(1, 1, 1))
-	m.addField(string(DebtTax), nil)
+	m.setField(string(DebtDate), date)
+	m.setField(string(DebtDueDate), date.AddDate(1, 1, 1))
+	m.setField(string(DebtTax), nil)
 
 	item := MakeItem()
 	item.SetName("name-1")
 	item.SetFieldToNil(ItemDescription)
-	m.addField(string(DebtItems), []Item{item})
+	m.setField(string(DebtItems), []Item{item})
 
 	attributes := make(map[string]string)
 	attributes["k"] = "v"
-	m.addField(string(DebtAttributes), attributes)
+	m.setField(string(DebtAttributes), attributes)
 
 	return
+}
+
+func buildTestAnotherDebtModelBuilder() (m *testModelBuilder, customerId string) {
+	m, _ = buildTestDebtModelBuilder()
+	id := "fdfd"
+	m.setField(string(DebtNumber), "2")
+	m.setField(string(DebtId), id)
+
+	return m, m.fields[string(DebtCustomerId)].(string)
 }
