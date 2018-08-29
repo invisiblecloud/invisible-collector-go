@@ -15,117 +15,6 @@ const (
 	testApiKey = "aded"
 )
 
-type requestPair struct {
-	Error error
-	Model model
-}
-
-func (p requestPair) buildFromCompanyPair(cp CompanyPair) requestPair {
-	return requestPair{cp.Error, cp.Company.model}
-}
-
-func buildBarebonesTestServerRequest(statusCode int, useContentTypeHeader bool, returnJson string) *httptest.Server {
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		if useContentTypeHeader {
-			w.Header().Set("Content-Type", "application/json")
-		}
-		w.WriteHeader(statusCode)
-		io.WriteString(w, returnJson)
-	})
-
-	return httptest.NewServer(handler)
-}
-
-func buildAssertingTestServerRequest(t *testing.T, returnJson string, expectedMethod string, expectedUriPath string, expectedJsonBits []string) *httptest.Server {
-	const jsonMime = "application/json"
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, expectedUriPath, r.URL.Path)
-		assert.Equal(t, expectedMethod, r.Method)
-
-		assert.Contains(t, r.Header.Get("Accept"), jsonMime)
-		assert.Contains(t, r.Header.Get("Authorization"), "Bearer")
-		assert.Contains(t, r.Header.Get("Authorization"), testApiKey)
-
-		if expectedJsonBits != nil {
-			assert.Contains(t, r.Header.Get("Content-Type"), jsonMime)
-			assert.Contains(t, r.Header.Get("Content-Type"), "utf-8")
-
-			bodyBytes, _ := internal.ReadCloseableBuffer(r.Body)
-			bodyString := string(bodyBytes)
-			for _, js := range expectedJsonBits {
-				assert.Contains(t, bodyString, js)
-			}
-
-		} else {
-			assert.NotContains(t, r.Header.Get("Content-Type"), jsonMime)
-		}
-
-		if returnJson != "" {
-			w.Header().Set("Content-Type", jsonMime)
-			io.WriteString(w, returnJson)
-		}
-	})
-
-	return httptest.NewServer(handler)
-}
-
-func buildCollector(t *testing.T, baseUri string) *InvisibleCollector {
-	collector, err := NewInvisibleCollector(testApiKey, baseUri)
-	require.Nil(t, err)
-
-	return collector
-}
-
-func assertCorrectReturnedData(t *testing.T, expected interface{}, actual interface{}, returnedErr error) {
-	if !reflect.DeepEqual(expected, actual) {
-		t.Fatalf("Models must be the same: \n expected: %v \n actual: %v", expected, actual)
-	}
-
-	require.Nil(t, returnedErr)
-}
-
-func assertCompanyRequest(t *testing.T, baseUri string, expectedModel model, method func(collector *InvisibleCollector, ch chan CompanyPair)) {
-
-	collector := buildCollector(t, baseUri)
-	ch := make(chan CompanyPair)
-	go method(collector, ch)
-	p := <-ch
-
-	assertCorrectReturnedData(t, expectedModel, p.Company.model, p.Error)
-}
-
-func assertCustomerRequest(t *testing.T, baseUri string, expectedModel model, method func(collector *InvisibleCollector, ch chan CustomerPair)) {
-
-	collector := buildCollector(t, baseUri)
-	ch := make(chan CustomerPair)
-	go method(collector, ch)
-	p := <-ch
-
-	assertCorrectReturnedData(t, expectedModel, p.Customer.model, p.Error)
-}
-
-func assertCustomerAttributesRequest(t *testing.T, baseUri string, expectedAttributes map[string]string, method func(collector *InvisibleCollector, ch chan AttributesPair)) {
-
-	collector := buildCollector(t, baseUri)
-	ch := make(chan AttributesPair)
-	go method(collector, ch)
-	p := <-ch
-
-	assertCorrectReturnedData(t, expectedAttributes, p.Attributes, p.Error)
-}
-
-func assertDebtRequest(t *testing.T, baseUri string, expectedModel model, method func(collector *InvisibleCollector, ch chan DebtPair)) {
-
-	collector := buildCollector(t, baseUri)
-	ch := make(chan DebtPair)
-	go method(collector, ch)
-	p := <-ch
-
-	assertCorrectReturnedData(t, expectedModel, p.Debt.model, p.Error)
-}
-
 func TestInvalidUri(t *testing.T) {
 	_, err := NewInvisibleCollector(testApiKey, "ftp://123.23.23.23")
 	require.NotNil(t, err)
@@ -403,4 +292,106 @@ func TestGetCustomerDebts(t *testing.T) {
 	p := <-ch
 
 	assertCorrectReturnedData(t, []Debt{expectedDebt1, expectedDebt2}, p.Debts, p.Error)
+}
+
+func buildBarebonesTestServerRequest(statusCode int, useContentTypeHeader bool, returnJson string) *httptest.Server {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if useContentTypeHeader {
+			w.Header().Set("Content-Type", "application/json")
+		}
+		w.WriteHeader(statusCode)
+		io.WriteString(w, returnJson)
+	})
+
+	return httptest.NewServer(handler)
+}
+
+func buildAssertingTestServerRequest(t *testing.T, returnJson string, expectedMethod string, expectedUriPath string, expectedJsonBits []string) *httptest.Server {
+	const jsonMime = "application/json"
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, expectedUriPath, r.URL.Path)
+		assert.Equal(t, expectedMethod, r.Method)
+
+		assert.Contains(t, r.Header.Get("Accept"), jsonMime)
+		assert.Contains(t, r.Header.Get("Authorization"), "Bearer")
+		assert.Contains(t, r.Header.Get("Authorization"), testApiKey)
+
+		if expectedJsonBits != nil {
+			assert.Contains(t, r.Header.Get("Content-Type"), jsonMime)
+			assert.Contains(t, r.Header.Get("Content-Type"), "utf-8")
+
+			bodyBytes, _ := internal.ReadCloseableBuffer(r.Body)
+			bodyString := string(bodyBytes)
+			for _, js := range expectedJsonBits {
+				assert.Contains(t, bodyString, js)
+			}
+
+		} else {
+			assert.NotContains(t, r.Header.Get("Content-Type"), jsonMime)
+		}
+
+		if returnJson != "" {
+			w.Header().Set("Content-Type", jsonMime)
+			io.WriteString(w, returnJson)
+		}
+	})
+
+	return httptest.NewServer(handler)
+}
+
+func buildCollector(t *testing.T, baseUri string) *InvisibleCollector {
+	collector, err := NewInvisibleCollector(testApiKey, baseUri)
+	require.Nil(t, err)
+
+	return collector
+}
+
+func assertCorrectReturnedData(t *testing.T, expected interface{}, actual interface{}, returnedErr error) {
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("Models must be the same: \n expected: %v \n actual: %v", expected, actual)
+	}
+
+	require.Nil(t, returnedErr)
+}
+
+func assertCompanyRequest(t *testing.T, baseUri string, expectedModel model, method func(collector *InvisibleCollector, ch chan CompanyPair)) {
+
+	collector := buildCollector(t, baseUri)
+	ch := make(chan CompanyPair)
+	go method(collector, ch)
+	p := <-ch
+
+	assertCorrectReturnedData(t, expectedModel, p.Company.model, p.Error)
+}
+
+func assertCustomerRequest(t *testing.T, baseUri string, expectedModel model, method func(collector *InvisibleCollector, ch chan CustomerPair)) {
+
+	collector := buildCollector(t, baseUri)
+	ch := make(chan CustomerPair)
+	go method(collector, ch)
+	p := <-ch
+
+	assertCorrectReturnedData(t, expectedModel, p.Customer.model, p.Error)
+}
+
+func assertCustomerAttributesRequest(t *testing.T, baseUri string, expectedAttributes map[string]string, method func(collector *InvisibleCollector, ch chan AttributesPair)) {
+
+	collector := buildCollector(t, baseUri)
+	ch := make(chan AttributesPair)
+	go method(collector, ch)
+	p := <-ch
+
+	assertCorrectReturnedData(t, expectedAttributes, p.Attributes, p.Error)
+}
+
+func assertDebtRequest(t *testing.T, baseUri string, expectedModel model, method func(collector *InvisibleCollector, ch chan DebtPair)) {
+
+	collector := buildCollector(t, baseUri)
+	ch := make(chan DebtPair)
+	go method(collector, ch)
+	p := <-ch
+
+	assertCorrectReturnedData(t, expectedModel, p.Debt.model, p.Error)
 }

@@ -77,11 +77,11 @@ func (c *Company) NotificationsEnabled() bool {
 	return c.getBool(CompanyNotificationsEnabled)
 }
 
-func (c *Company) deepCopy() Company {
-	return Company{c.shallowCopy()}
-}
-
 func (c Company) MarshalJSON() ([]byte, error) {
 	m := internal.MapSubmap(c.fields, string(CompanyName), string(CompanyVatNumber), string(CompanyAddress), string(CompanyZipCode), string(CompanyCity), string(CompanyCountry))
 	return model{m}.MarshalJSON()
+}
+
+func (c *Company) deepCopy() Company {
+	return Company{c.shallowCopy()}
 }

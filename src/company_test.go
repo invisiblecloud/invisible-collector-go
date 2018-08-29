@@ -93,14 +93,13 @@ func TestCompanyMarshal(t *testing.T) {
 	require.NotContains(t, jsonString, "true")
 }
 
-const companyJson = `
+func TestUnmarshal(t *testing.T) {
+	const companyJson = `
 {
 	"name": "test-name",
 	"city": null
 }
 `
-
-func TestUnmarshal(t *testing.T) {
 
 	companyJsonBytes := []byte(companyJson)
 	var c Company

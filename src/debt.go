@@ -31,20 +31,6 @@ func MakeDebt() Debt {
 	return Debt{makeModel()}
 }
 
-func (d *Debt) tryFormatDateString(field modelField) {
-	if d.FieldExists(field) {
-		d.fields[string(field)] = d.getDate(field).Format(dateFormat)
-	}
-}
-
-func (d *Debt) tryUnformatDateString(field modelField) (err error) {
-	if d.FieldExists(field) {
-		d.fields[string(field)], err = time.Parse(dateFormat, d.getString(field))
-	}
-
-	return
-}
-
 func (d Debt) MarshalJSON() ([]byte, error) {
 	clone := Debt{d.shallowCopy()}
 	clone.UnsetField(CustomerId)
@@ -183,14 +169,6 @@ func (d *Debt) Currency() string {
 	return d.getString(DebtCurrency)
 }
 
-func (d *Debt) items() []Item {
-	if v := d.getField(DebtItems); v != nil {
-		return v.([]Item)
-	}
-
-	return make([]Item, 0)
-}
-
 func (d *Debt) AddItem(item Item) {
 	d.fields[string(DebtItems)] = append(d.items(), item.deepCopy())
 }
@@ -238,4 +216,26 @@ func (d *Debt) AssertItemsHaveFields(requiredFields []fieldNamer) error {
 	}
 
 	return nil
+}
+
+func (d *Debt) items() []Item {
+	if v := d.getField(DebtItems); v != nil {
+		return v.([]Item)
+	}
+
+	return make([]Item, 0)
+}
+
+func (d *Debt) tryUnformatDateString(field modelField) (err error) {
+	if d.FieldExists(field) {
+		d.fields[string(field)], err = time.Parse(dateFormat, d.getString(field))
+	}
+
+	return
+}
+
+func (d *Debt) tryFormatDateString(field modelField) {
+	if d.FieldExists(field) {
+		d.fields[string(field)] = d.getDate(field).Format(dateFormat)
+	}
 }

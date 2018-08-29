@@ -8,6 +8,16 @@ import (
 	"time"
 )
 
+var debtNil *Debt = nil
+var _ Modeler = debtNil
+var _ json.Marshaler = debtNil
+var _ json.Unmarshaler = debtNil
+
+var itemNil *Item = nil
+var _ Modeler = itemNil
+var _ json.Marshaler = itemNil
+var _ json.Unmarshaler = itemNil
+
 func TestDebtAddItems(t *testing.T) {
 	d := MakeDebt()
 	require.Equal(t, 0, len(d.items()))
@@ -43,7 +53,7 @@ func TestSetAttributes(t *testing.T) {
 }
 
 func TestDebtUnmarshalJSON(t *testing.T) {
-	const json = `{
+	const debtJson = `{
   "number": "1",
   "customerId": "0d3987e3-a6df-422c-8722-3fde26eec9a8",
   "type": "FT",
@@ -74,7 +84,7 @@ func TestDebtUnmarshalJSON(t *testing.T) {
 }`
 
 	d := MakeDebt()
-	err := d.UnmarshalJSON([]byte(json))
+	err := d.UnmarshalJSON([]byte(debtJson))
 	require.Nil(t, err)
 
 	assert.Equal(t, "1", d.Number())
