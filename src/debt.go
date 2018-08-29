@@ -82,6 +82,16 @@ func (d *Debt) UnmarshalJSON(jsonString []byte) error {
 		d.fields[string(DebtItems)] = items
 	}
 
+	if d.FieldExists(DebtAttributes) {
+		rawAttributes := d.fields[string(DebtAttributes)].(map[string]interface{})
+		attributes := make(map[string]string)
+		for k, v := range rawAttributes {
+			attributes[k] = v.(string)
+		}
+
+		d.fields[string(DebtAttributes)] = attributes
+	}
+
 	return nil
 }
 
@@ -182,7 +192,7 @@ func (d *Debt) items() []Item {
 }
 
 func (d *Debt) AddItem(item Item) {
-	d.fields[string(DebtItems)] = append(d.items(), item.DeepCopy())
+	d.fields[string(DebtItems)] = append(d.items(), item.deepCopy())
 }
 
 func (d *Debt) Items() []Item {
@@ -190,7 +200,7 @@ func (d *Debt) Items() []Item {
 	clone := make([]Item, len(items))
 
 	for i, v := range items {
-		clone[i] = v.DeepCopy()
+		clone[i] = v.deepCopy()
 	}
 
 	return clone

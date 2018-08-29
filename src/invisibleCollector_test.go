@@ -116,6 +116,16 @@ func assertCustomerAttributesRequest(t *testing.T, baseUri string, expectedAttri
 	assertCorrectReturnedData(t, expectedAttributes, p.Attributes, p.Error)
 }
 
+func assertDebtRequest(t *testing.T, baseUri string, expectedModel model, method func(collector *InvisibleCollector, ch chan DebtPair)) {
+
+	collector := buildCollector(t, baseUri)
+	ch := make(chan DebtPair)
+	go method(collector, ch)
+	p := <-ch
+
+	assertCorrectReturnedData(t, expectedModel, p.Debt.model, p.Error)
+}
+
 func TestInvalidUri(t *testing.T) {
 	_, err := NewInvisibleCollector(testApiKey, "ftp://123.23.23.23")
 	require.NotNil(t, err)
@@ -316,7 +326,7 @@ func TestGetCustomerAttributes(t *testing.T) {
 		"go-attr-1": "go-val-1",
 		"go-attr-2": "go-val-2",
 	}
-	jsonStr := BuildJson(attributes)
+	jsonStr := buildJson(attributes)
 
 	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", "/customers/"+id+"/attributes", nil)
 	defer ts.Close()
@@ -332,7 +342,7 @@ func TestSetCustomerAttributes(t *testing.T) {
 		"go-attr-1": "go-val-1",
 		"go-attr-2": "go-val-2",
 	}
-	jsonStr := BuildJson(attributes)
+	jsonStr := buildJson(attributes)
 	jsonBits := []string{"go-attr-1", "go-val-1", "go-attr-2", "go-val-2"}
 
 	ts := buildAssertingTestServerRequest(t, jsonStr, "POST", "/customers/"+id+"/attributes", jsonBits)
@@ -342,4 +352,32 @@ func TestSetCustomerAttributes(t *testing.T) {
 		func(collector *InvisibleCollector, ch chan AttributesPair) {
 			collector.SetCustomerAttributes(ch, id, attributes)
 		})
+}
+
+func TestSetNewDebt(t *testing.T) {
+
+	builder, _ := buildTestDebtModelBuilder()
+	jsonStr := builder.buildDebtJson()
+	returnModel := builder.buildDebtReturnModel()
+	requestModel := Debt{builder.buildRequestModel()}
+	fragments := builder.getDebtRequestJsonBits("gid")
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "POST", "/debts", fragments)
+	defer ts.Close()
+
+	assertDebtRequest(t, ts.URL, returnModel,
+		func(collector *InvisibleCollector, ch chan DebtPair) { collector.SetNewDebt(ch, requestModel) })
+}
+
+func TestGetDebt(t *testing.T) {
+
+	builder, id := buildTestDebtModelBuilder()
+	jsonStr := builder.buildDebtJson()
+	expectedReturnModel := builder.buildDebtReturnModel()
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", "/debts/"+id, nil)
+	defer ts.Close()
+
+	assertDebtRequest(t, ts.URL, expectedReturnModel,
+		func(collector *InvisibleCollector, ch chan DebtPair) { collector.GetDebt(ch, id) })
 }

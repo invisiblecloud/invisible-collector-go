@@ -77,7 +77,7 @@ func (c *Company) NotificationsEnabled() bool {
 	return c.getBool(CompanyNotificationsEnabled)
 }
 
-func (c *Company) DeepCopy() Company {
+func (c *Company) deepCopy() Company {
 	return Company{c.shallowCopy()}
 }
 

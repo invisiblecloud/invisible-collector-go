@@ -69,7 +69,7 @@ func TestDeepCopy(t *testing.T) {
 	c1 := MakeCompany()
 	c1.SetName(testString1)
 
-	c2 := c1.DeepCopy()
+	c2 := c1.deepCopy()
 	require.Equal(t, testString1, c2.Name())
 
 	c1.SetName(testString2)

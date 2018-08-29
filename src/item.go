@@ -16,7 +16,7 @@ func MakeItem() Item {
 	return Item{makeModel()}
 }
 
-func (i *Item) DeepCopy() Item {
+func (i *Item) deepCopy() Item {
 	return Item{i.shallowCopy()}
 }
 

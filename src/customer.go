@@ -21,12 +21,12 @@ func MakeCustomer() Customer {
 	return Customer{makeModel()}
 }
 
-func (c *Customer) DeepCopy() Customer {
+func (c *Customer) deepCopy() Customer {
 	return Customer{c.shallowCopy()}
 }
 
 func (c Customer) MarshalJSON() ([]byte, error) {
-	clone := c.DeepCopy()
+	clone := c.deepCopy()
 	clone.UnsetField(CustomerId)
 	return clone.model.MarshalJSON()
 }
