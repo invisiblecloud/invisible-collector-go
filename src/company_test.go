@@ -6,11 +6,6 @@ import (
 	"testing"
 )
 
-const (
-	testString1 = "test-value-1"
-	testString2 = "test-value-2"
-)
-
 // check that Company implements various interfaces
 var companyNil *Company = nil
 var _ Modeler = companyNil
