@@ -2,12 +2,16 @@ package ic
 
 import (
 	"encoding/json"
-	"github.com/invisiblecloud/invisible-collector-go/internal"
 	"net/http"
 )
 
 const (
-	companiesPath = "companies"
+	companiesPath          = "companies"
+	customersPath          = "customers"
+	customerAttributesPath = "attributes"
+	customerDebtsPath      = "debts"
+	debtsPath              = "debts"
+	InvisibleCollectorUri  = "https://api.invisiblecollector.com/"
 )
 
 type CompanyPair struct {
@@ -15,14 +19,32 @@ type CompanyPair struct {
 	Error   error
 }
 
-const InvisibleCollectorUri = "https://api.invisiblecollector.com/"
+type CustomerPair struct {
+	Customer Customer
+	Error    error
+}
+
+type AttributesPair struct {
+	Attributes map[string]string
+	Error      error
+}
+
+type DebtPair struct {
+	Debt  Debt
+	Error error
+}
+
+type DebtListPair struct {
+	Debts []Debt
+	Error error
+}
 
 type InvisibleCollector struct {
-	internal.ApiRequest
+	apiRequest
 }
 
 func NewInvisibleCollector(apiKey string, apiUrl string) (*InvisibleCollector, error) {
-	requests, err := internal.NewApiRequests(apiKey, apiUrl)
+	requests, err := newApiRequest(apiKey, apiUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -51,33 +73,115 @@ func (iC *InvisibleCollector) SetCompanyNotifications(returnChannel chan<- Compa
 	iC.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath, notificationsPath}, nil, nil)
 }
 
+func (iC *InvisibleCollector) SetNewCustomer(returnChannel chan<- CustomerPair, newCustomer Customer) {
+	iC.makeCustomerRequest(returnChannel, http.MethodPost, []string{customersPath}, &newCustomer, []fieldNamer{CustomerName, CustomerVatNumber, CustomerCountry})
+}
+
+func (iC *InvisibleCollector) SetCustomer(returnChannel chan<- CustomerPair, updatedCustomer Customer) {
+	iC.makeCustomerRequest(returnChannel, http.MethodPut, []string{customersPath, updatedCustomer.RoutableId()}, &updatedCustomer, []fieldNamer{CustomerCountry})
+}
+
+func (iC *InvisibleCollector) GetCustomer(returnChannel chan<- CustomerPair, customerId string) {
+	iC.makeCustomerRequest(returnChannel, http.MethodGet, []string{customersPath, customerId}, nil, nil)
+}
+
+func (iC *InvisibleCollector) SetCustomerAttributes(returnChannel chan<- AttributesPair, customerId string, attributes map[string]string) {
+
+	iC.makeAttributesRequest(returnChannel, http.MethodPost, []string{customersPath, customerId, customerAttributesPath}, attributes)
+}
+
+func (iC *InvisibleCollector) GetCustomerAttributes(returnChannel chan<- AttributesPair, customerId string) {
+	iC.makeAttributesRequest(returnChannel, http.MethodGet, []string{customersPath, customerId, customerAttributesPath}, nil)
+}
+
+func (iC *InvisibleCollector) SetNewDebt(returnChannel chan<- DebtPair, newDebt Debt) {
+	iC.makeDebtRequest(returnChannel, http.MethodPost, []string{debtsPath}, &newDebt, []fieldNamer{DebtNumber, DebtCustomerId, DebtType, DebtDate, DebtDueDate}, []fieldNamer{ItemName})
+}
+
+func (iC *InvisibleCollector) GetDebt(returnChannel chan<- DebtPair, debtId string) {
+	iC.makeDebtRequest(returnChannel, http.MethodGet, []string{debtsPath, debtId}, nil, nil, nil)
+}
+
+func (iC *InvisibleCollector) GetCustomerDebts(returnChannel chan<- DebtListPair, customerId string) {
+
+	debts := make([]Debt, 0)
+	err := iC.makeRequest(&debts, http.MethodGet, []string{customersPath, customerId, customerDebtsPath}, nil)
+	returnChannel <- DebtListPair{debts, err}
+}
+
+func (iC *InvisibleCollector) makeDebtRequest(returnChannel chan<- DebtPair, requestMethod string, pathFragments []string, requestDebt *Debt, debtMandatoryFields []fieldNamer, itemsMandatoryFields []fieldNamer) {
+
+	if requestDebt != nil && len(itemsMandatoryFields) != 0 {
+		if err := requestDebt.AssertItemsHaveFields(itemsMandatoryFields); err != nil {
+			returnChannel <- DebtPair{Debt{}, nil}
+			return
+		}
+	}
+
+	var requestModel Modeler = nil
+	if requestDebt != nil {
+		requestModel = requestDebt
+	}
+
+	debt := Debt{}
+	err := iC.makeModelRequest(&debt, requestMethod, pathFragments, requestModel, debtMandatoryFields)
+	returnChannel <- DebtPair{debt, err}
+}
+
+func (iC *InvisibleCollector) makeAttributesRequest(returnChannel chan<- AttributesPair, requestMethod string, pathFragments []string, requestAttributes map[string]string) {
+	attributes := make(map[string]string)
+	var err error
+	if len(requestAttributes) == 0 {
+		err = iC.makeRequest(&attributes, requestMethod, pathFragments, nil)
+	} else {
+		err = iC.makeRequest(&attributes, requestMethod, pathFragments, requestAttributes)
+	}
+
+	returnChannel <- AttributesPair{attributes, err}
+}
+
+func (iC *InvisibleCollector) makeCustomerRequest(returnChannel chan<- CustomerPair, requestMethod string, pathFragments []string, requestModel Modeler, mandatoryFields []fieldNamer) {
+
+	customer := Customer{}
+	err := iC.makeModelRequest(&customer, requestMethod, pathFragments, requestModel, mandatoryFields)
+	returnChannel <- CustomerPair{customer, err}
+}
+
 func (iC *InvisibleCollector) makeCompanyRequest(returnChannel chan<- CompanyPair, requestMethod string, pathFragments []string, requestModel Modeler, mandatoryFields []fieldNamer) {
 
 	company := Company{}
-	err := iC.makeRequest(&company, requestMethod, pathFragments, requestModel, mandatoryFields)
+	err := iC.makeModelRequest(&company, requestMethod, pathFragments, requestModel, mandatoryFields)
 	returnChannel <- CompanyPair{company, err}
 }
 
-func (iC *InvisibleCollector) makeRequest(returnModel Modeler, requestMethod string, pathFragments []string, requestModel Modeler, mandatoryFields []fieldNamer) error {
+func (iC *InvisibleCollector) makeModelRequest(returnModel Modeler, requestMethod string, pathFragments []string, requestModel Modeler, mandatoryFields []fieldNamer) error {
 
-	var requestBody []byte = nil
 	if requestModel != nil {
 		if fieldErr := requestModel.AssertHasFields(mandatoryFields); fieldErr != nil {
-			return nil
+			return fieldErr
 		}
+	}
 
-		requestJson, marshalErr := json.Marshal(requestModel)
+	return iC.makeRequest(returnModel, requestMethod, pathFragments, requestModel)
+}
+
+func (iC *InvisibleCollector) makeRequest(returnData interface{}, requestMethod string, pathFragments []string, requestData interface{}) error {
+
+	var requestBody []byte = nil
+	if requestData != nil {
+
+		requestJson, marshalErr := json.Marshal(requestData)
 		if marshalErr != nil {
-			return nil
+			return marshalErr
 		}
 
 		requestBody = requestJson
 	}
 
-	returnJson, requestErr := iC.MakeJsonRequest(requestBody, requestMethod, pathFragments)
+	returnJson, requestErr := iC.makeJsonRequest(requestBody, requestMethod, pathFragments)
 	if requestErr != nil {
-		return nil
+		return requestErr
 	}
 
-	return json.Unmarshal(returnJson, returnModel)
+	return json.Unmarshal(returnJson, returnData)
 }

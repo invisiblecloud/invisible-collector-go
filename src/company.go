@@ -1,5 +1,7 @@
 package ic
 
+import "github.com/invisiblecloud/invisible-collector-go/internal"
+
 const (
 	CompanyName                 modelField = "name"
 	CompanyVatNumber            modelField = "vatNumber"
@@ -76,5 +78,10 @@ func (c *Company) NotificationsEnabled() bool {
 }
 
 func (c *Company) DeepCopy() Company {
-	return Company{c.deepCopy()}
+	return Company{c.shallowCopy()}
+}
+
+func (c Company) MarshalJSON() ([]byte, error) {
+	m := internal.MapSubmap(c.fields, string(CompanyName), string(CompanyVatNumber), string(CompanyAddress), string(CompanyZipCode), string(CompanyCity), string(CompanyCountry))
+	return model{m}.MarshalJSON()
 }

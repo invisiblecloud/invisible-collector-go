@@ -1,8 +1,10 @@
-package internal
+package ic
 
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"github.com/invisiblecloud/invisible-collector-go/internal"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,7 +14,7 @@ const (
 	jsonMime = "application/json"
 )
 
-type ApiRequest struct {
+type apiRequest struct {
 	apiKey string
 	apiUrl url.URL
 }
@@ -20,7 +22,7 @@ type ApiRequest struct {
 // it's thread-safe, recommended to reuse the client
 var httpClient = http.Client{}
 
-func NewApiRequests(apiKey string, apiUrl string) (*ApiRequest, error) {
+func newApiRequest(apiKey string, apiUrl string) (*apiRequest, error) {
 	uri, err := url.Parse(apiUrl)
 	if err != nil {
 		return nil, err
@@ -36,14 +38,14 @@ func NewApiRequests(apiKey string, apiUrl string) (*ApiRequest, error) {
 
 	// TODO check if api key contains only ascii (for headers)
 
-	if isWhitespaceString(apiKey) {
+	if internal.IsWhitespaceString(apiKey) {
 		return nil, errors.New("invalid api key: " + apiKey)
 	}
 
-	return &ApiRequest{apiKey, *uri}, nil
+	return &apiRequest{apiKey, *uri}, nil
 }
 
-func (api *ApiRequest) MakeJsonRequest(requestBody []byte, requestType string, pathSegments []string) (returnBody []byte, err error) {
+func (api *apiRequest) makeJsonRequest(requestBody []byte, requestType string, pathSegments []string) (returnBody []byte, err error) {
 	request, requestErr := api.buildRequest(requestType, pathSegments, requestBody)
 	if requestErr != nil {
 		return nil, requestErr
@@ -58,13 +60,17 @@ func (api *ApiRequest) MakeJsonRequest(requestBody []byte, requestType string, p
 		return nil, api.buildProtocolErrorMessage(response)
 	}
 
-	return readCloseableBuffer(response.Body)
+	if !internal.JsonContentType(&response.Header) {
+		return nil, errors.New("returned content-type isn't json")
+	}
+
+	return internal.ReadCloseableBuffer(response.Body)
 }
 
-func (api *ApiRequest) joinPathFragments(pathSegments []string) (string, error) {
+func (api *apiRequest) joinPathFragments(pathSegments []string) (string, error) {
 	encodedPaths := make([]string, len(pathSegments))
 	for i, pathSegment := range pathSegments {
-		if isWhitespaceString(pathSegment) {
+		if internal.IsWhitespaceString(pathSegment) {
 			return "", errors.New("Invalid uri path segment: " + pathSegment)
 		}
 
@@ -74,7 +80,7 @@ func (api *ApiRequest) joinPathFragments(pathSegments []string) (string, error) 
 	return api.apiUrl.String() + "/" + strings.Join(encodedPaths, "/"), nil
 }
 
-func (api *ApiRequest) buildRequest(requestType string, pathSegments []string, requestBody []byte) (*http.Request, error) {
+func (api *apiRequest) buildRequest(requestType string, pathSegments []string, requestBody []byte) (*http.Request, error) {
 	if requestType != http.MethodGet && requestType != http.MethodPost && requestType != http.MethodPut && requestType != http.MethodDelete {
 		panic("Internal error: invalid http request method.")
 	}
@@ -94,16 +100,30 @@ func (api *ApiRequest) buildRequest(requestType string, pathSegments []string, r
 	request.Header.Set("Accept", jsonMime)
 	request.Header.Set("Authorization", "Bearer "+api.apiKey)
 	if requestBody != nil && len(requestBody) != 0 {
-		request.Header.Set("Content-Type", jsonMime+"; charset=UTF-8")
+		request.Header.Set("Content-Type", jsonMime+"; charset=utf-8")
 	}
 
 	return request, nil
 }
 
-func (api *ApiRequest) buildProtocolErrorMessage(response *http.Response) error {
+func (api *apiRequest) buildProtocolErrorMessage(response *http.Response) error {
 	var httpError error = HttpStatusCodeError(response.StatusCode)
 
-	// TODO check error json
+	if internal.JsonContentType(&response.Header) {
+		if m, err := internal.BufferToMap(response.Body); err == nil {
+			statusCode := internal.MapGetValue(m, "code")
+			msg := internal.MapGetValue(m, "message")
+			id := internal.SliceFirstNonNil(internal.MapGetValue(m, "id"), internal.MapGetValue(m, "gid"))
+			if msg != nil && statusCode != nil {
+				errMsg := fmt.Sprintf("%v: %v", statusCode, msg)
+				if id != nil && response.StatusCode == 409 {
+					return ConflictError{errMsg, id.(string)}
+				} else {
+					return ServerError(errMsg)
+				}
+			}
+		}
+	}
 
 	return httpError
 }

@@ -3,6 +3,8 @@ package ic
 import (
 	"encoding/json"
 	"errors"
+	"github.com/invisiblecloud/invisible-collector-go/internal"
+	"time"
 )
 
 type modelField string
@@ -32,7 +34,7 @@ func makeModel() model {
 	return model{make(map[string]interface{})}
 }
 
-func (m *model) deepCopy() model {
+func (m *model) shallowCopy() model {
 	clone := makeModel()
 	for k, v := range m.fields {
 		clone.fields[k] = v
@@ -65,7 +67,7 @@ func (m model) MarshalJSON() ([]byte, error) {
 
 func (m *model) UnmarshalJSON(jsonString []byte) (err error) {
 	err = json.Unmarshal(jsonString, &m.fields)
-	m.unsetNullFields()
+	m.unsetNilFields()
 	return err
 }
 
@@ -80,20 +82,12 @@ func (m *model) AssertHasFields(requiredFields []fieldNamer) error {
 	return nil
 }
 
-func (m *model) unsetNullFields() {
-	for k, v := range m.fields {
-		if v == nil {
-			delete(m.fields, k)
-		}
-	}
+func (m *model) unsetNilFields() {
+	internal.MapRemoveNils(m.fields)
 }
 
 func (m *model) getField(fieldName modelField) interface{} {
-	if v, ok := m.fields[string(fieldName)]; ok {
-		return v
-	}
-
-	return nil
+	return internal.MapGetValue(m.fields, string(fieldName))
 }
 
 func (m *model) getString(fieldName modelField) string {
@@ -110,4 +104,20 @@ func (m *model) getBool(fieldName modelField) bool {
 	}
 
 	return false
+}
+
+func (m *model) getFloat64(fieldName modelField) float64 {
+	if v := m.getField(fieldName); v != nil {
+		return v.(float64)
+	}
+
+	return 0.0
+}
+
+func (m *model) getDate(fieldName modelField) time.Time {
+	if v := m.getField(fieldName); v != nil {
+		return v.(time.Time)
+	}
+
+	return time.Time{}
 }
