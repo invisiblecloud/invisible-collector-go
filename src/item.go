@@ -16,10 +16,6 @@ func MakeItem() Item {
 	return Item{makeModel()}
 }
 
-func (i *Item) DeepCopy() Item {
-	return Item{i.shallowCopy()}
-}
-
 func (i *Item) SetName(name string) {
 	i.fields[string(ItemName)] = name
 }
@@ -58,4 +54,8 @@ func (i *Item) SetPrice(price float64) {
 
 func (i *Item) Price() float64 {
 	return i.getFloat64(ItemPrice)
+}
+
+func (i *Item) deepCopy() Item {
+	return Item{i.shallowCopy()}
 }

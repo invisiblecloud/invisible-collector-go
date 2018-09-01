@@ -6,11 +6,6 @@ import (
 	"testing"
 )
 
-const (
-	testString1 = "test-value-1"
-	testString2 = "test-value-2"
-)
-
 // check that Company implements various interfaces
 var companyNil *Company = nil
 var _ Modeler = companyNil
@@ -69,7 +64,7 @@ func TestDeepCopy(t *testing.T) {
 	c1 := MakeCompany()
 	c1.SetName(testString1)
 
-	c2 := c1.DeepCopy()
+	c2 := c1.deepCopy()
 	require.Equal(t, testString1, c2.Name())
 
 	c1.SetName(testString2)
@@ -98,14 +93,13 @@ func TestCompanyMarshal(t *testing.T) {
 	require.NotContains(t, jsonString, "true")
 }
 
-const companyJson = `
+func TestUnmarshal(t *testing.T) {
+	const companyJson = `
 {
 	"name": "test-name",
 	"city": null
 }
 `
-
-func TestUnmarshal(t *testing.T) {
 
 	companyJsonBytes := []byte(companyJson)
 	var c Company

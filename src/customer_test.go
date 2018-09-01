@@ -6,6 +6,11 @@ import (
 	"testing"
 )
 
+var customerNil *Customer = nil
+var _ Modeler = customerNil
+var _ json.Marshaler = customerNil
+var _ json.Unmarshaler = customerNil
+
 func TestCustomerMarshal(t *testing.T) {
 	c := MakeCustomer()
 	c.SetName(testString1)

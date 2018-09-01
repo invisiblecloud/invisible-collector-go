@@ -178,7 +178,7 @@ func (iC *InvisibleCollector) makeRequest(returnData interface{}, requestMethod 
 		requestBody = requestJson
 	}
 
-	returnJson, requestErr := iC.makeJsonRequest(requestBody, requestMethod, pathFragments)
+	returnJson, requestErr := iC.makeJsonRequest(requestBody, requestMethod, pathFragments...)
 	if requestErr != nil {
 		return requestErr
 	}

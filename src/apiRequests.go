@@ -45,7 +45,7 @@ func newApiRequest(apiKey string, apiUrl string) (*apiRequest, error) {
 	return &apiRequest{apiKey, *uri}, nil
 }
 
-func (api *apiRequest) makeJsonRequest(requestBody []byte, requestType string, pathSegments []string) (returnBody []byte, err error) {
+func (api *apiRequest) makeJsonRequest(requestBody []byte, requestType string, pathSegments ...string) (returnBody []byte, err error) {
 	request, requestErr := api.buildRequest(requestType, pathSegments, requestBody)
 	if requestErr != nil {
 		return nil, requestErr

@@ -30,19 +30,6 @@ type model struct {
 	fields map[string]interface{}
 }
 
-func makeModel() model {
-	return model{make(map[string]interface{})}
-}
-
-func (m *model) shallowCopy() model {
-	clone := makeModel()
-	for k, v := range m.fields {
-		clone.fields[k] = v
-	}
-
-	return clone
-}
-
 func (m *model) FieldExists(field fieldNamer) bool {
 	return m.getField(field.(modelField)) != nil
 }
@@ -120,4 +107,17 @@ func (m *model) getDate(fieldName modelField) time.Time {
 	}
 
 	return time.Time{}
+}
+
+func makeModel() model {
+	return model{make(map[string]interface{})}
+}
+
+func (m *model) shallowCopy() model {
+	clone := makeModel()
+	for k, v := range m.fields {
+		clone.fields[k] = v
+	}
+
+	return clone
 }
