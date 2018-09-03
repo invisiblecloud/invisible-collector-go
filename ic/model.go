@@ -17,6 +17,7 @@ type fieldNamer interface {
 	fieldName() string
 }
 
+// An interface to box any model
 type Modeler interface {
 	AssertHasFields(requiredFields []fieldNamer) error
 	MarshalJSON() ([]byte, error)
@@ -30,14 +31,24 @@ type model struct {
 	fields map[string]interface{}
 }
 
+// Check whether the specified field exists.
+//
+// The field exists if it is set and isn't nil.
 func (m *model) FieldExists(field fieldNamer) bool {
 	return m.getField(field.(modelField)) != nil
 }
 
+// Set the specified field to nil.
+//
+// The field if set to nil will be set if it isn't set. A "null" json value will be sent for this field in any seding api request.
 func (m *model) SetFieldToNil(field fieldNamer) {
 	m.fields[field.fieldName()] = nil
 }
 
+// Unset the specified field.
+//
+// An unset field is neither set or nil. No field or value will be sent corresponding to the unset field.
+// All fields in an empty model/newly constructed model are unset.
 func (m *model) UnsetField(field fieldNamer) bool {
 	fieldName := field.fieldName()
 	if _, ok := m.fields[string(fieldName)]; ok {
@@ -58,6 +69,9 @@ func (m *model) UnmarshalJSON(jsonString []byte) (err error) {
 	return err
 }
 
+// Assert the model has all the specified fields, returning an error in case any is missing.
+//
+// Mostly used internaly.
 func (m *model) AssertHasFields(requiredFields []fieldNamer) error {
 	for _, requiredField := range requiredFields {
 		fieldName := requiredField.fieldName()

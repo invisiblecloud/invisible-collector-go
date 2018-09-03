@@ -2,6 +2,9 @@ package ic
 
 import "github.com/invisiblecloud/invisible-collector-go/internal"
 
+// Represent the Company fields.
+//
+// Can be used as an argument in various methods related to field manipulation.
 const (
 	CompanyName                 modelField = "name"
 	CompanyVatNumber            modelField = "vatNumber"
@@ -13,10 +16,12 @@ const (
 	CompanyNotificationsEnabled modelField = "notificationsEnabled"
 )
 
+// The company model
 type Company struct {
 	model
 }
 
+// THe company constructor
 func MakeCompany() Company {
 	return Company{makeModel()}
 }
@@ -61,6 +66,7 @@ func (c *Company) City() string {
 	return c.getString(CompanyCity)
 }
 
+// The country should be the ISO 3166-1 country code
 func (c *Company) SetCountry(country string) {
 	c.fields[string(CompanyCountry)] = country
 }

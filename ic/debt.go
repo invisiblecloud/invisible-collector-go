@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+// Represent the Debt fields.
+//
+// Can be used as an argument in various methods related to field manipulation.
 const (
 	DebtId         modelField = "gid"
 	DebtNumber     modelField = "number"
@@ -19,14 +22,18 @@ const (
 	DebtCurrency   modelField = "currency"
 	DebtItems      modelField = "items"
 	DebtAttributes modelField = "attributes"
+)
 
+const (
 	dateFormat = "2006-01-02"
 )
 
+// The debt model
 type Debt struct {
 	model
 }
 
+// The model constructor
 func MakeDebt() Debt {
 	return Debt{makeModel()}
 }
@@ -81,6 +88,9 @@ func (d *Debt) UnmarshalJSON(jsonString []byte) error {
 	return nil
 }
 
+// Set the debt ID.
+//
+// This value is not sent but is used simply to identify the debt in invisible collector's database.
 func (d *Debt) SetId(id string) {
 	d.fields[string(DebtId)] = id
 }
@@ -97,6 +107,7 @@ func (d *Debt) Number() string {
 	return d.getString(DebtNumber)
 }
 
+// The customer to whom the debt is issued
 func (d *Debt) SetCustomerId(customerId string) {
 	d.fields[string(DebtCustomerId)] = customerId
 }
@@ -105,6 +116,10 @@ func (d *Debt) CustomerId() string {
 	return d.getString(DebtCustomerId)
 }
 
+// Can be one of:
+// "FT" - Normal invoice;
+// "FS" - Simplified invoice;
+// "SD" - Standard debt;
 func (d *Debt) SetType(debtType string) {
 	d.fields[string(DebtType)] = debtType
 }
@@ -113,6 +128,10 @@ func (d *Debt) Type() string {
 	return d.getString(DebtType)
 }
 
+// Can be one of:
+// "PENDING" - the default value;
+// "PAID";
+// "CANCELLED";
 func (d *Debt) SetStatus(status string) {
 	d.fields[string(DebtStatus)] = status
 }
@@ -121,6 +140,7 @@ func (d *Debt) Status() string {
 	return d.getString(DebtStatus)
 }
 
+// The date where only the year, month and day is considered (YYYY-MM-DD)
 func (d *Debt) SetDate(date time.Time) {
 	d.fields[string(DebtDate)] = date
 }
@@ -129,6 +149,7 @@ func (d *Debt) Date() time.Time {
 	return d.getDate(DebtDate)
 }
 
+// The due date where only the year, month and day is considered (YYYY-MM-DD)
 func (d *Debt) SetDueDate(dueDate time.Time) {
 	d.fields[string(DebtDueDate)] = dueDate
 }
@@ -161,6 +182,7 @@ func (d *Debt) GrossTotal() float64 {
 	return d.getFloat64(DebtGrossTotal)
 }
 
+// currency must be in the ISO 4217 currency code format.
 func (d *Debt) SetCurrency(currency string) {
 	d.fields[string(DebtCurrency)] = currency
 }
@@ -169,10 +191,12 @@ func (d *Debt) Currency() string {
 	return d.getString(DebtCurrency)
 }
 
+// Add an Item model to the end of the items list
 func (d *Debt) AddItem(item Item) {
 	d.fields[string(DebtItems)] = append(d.items(), item.deepCopy())
 }
 
+// get all the items of this debt
 func (d *Debt) Items() []Item {
 	items := d.items()
 	clone := make([]Item, len(items))
@@ -194,10 +218,12 @@ func (d *Debt) getAttributes() map[string]string {
 	return attributes
 }
 
+// Set an attribute
 func (d *Debt) SetAttribute(key string, value string) {
 	d.getAttributes()[key] = value
 }
 
+// Get all the debt's attributes
 func (d *Debt) Attributes() map[string]string {
 	clone := make(map[string]string)
 
@@ -208,6 +234,9 @@ func (d *Debt) Attributes() map[string]string {
 	return clone
 }
 
+// Assert that the items have the specified field names.
+//
+// Used mostly internally.
 func (d *Debt) AssertItemsHaveFields(requiredFields []fieldNamer) error {
 	for _, v := range d.items() {
 		if err := v.AssertHasFields(requiredFields); err != nil {

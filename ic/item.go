@@ -1,5 +1,8 @@
 package ic
 
+// Represent the Item fields.
+//
+// Can be used as an argument in various methods related to field manipulation.
 const (
 	ItemName        modelField = "name"
 	ItemDescription modelField = "description"
@@ -8,10 +11,14 @@ const (
 	ItemPrice       modelField = "price"
 )
 
+// The Item model.
+//
+// Item is a part of the Debt model
 type Item struct {
 	model
 }
 
+// The Item constructor
 func MakeItem() Item {
 	return Item{makeModel()}
 }
@@ -40,6 +47,7 @@ func (i *Item) Quantity() float64 {
 	return i.getFloat64(ItemQuantity)
 }
 
+// set the vat in percentage values (0 to 100.0)
 func (i *Item) SetVat(vat float64) {
 	i.fields[string(ItemVat)] = vat
 }
