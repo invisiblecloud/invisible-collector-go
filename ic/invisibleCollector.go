@@ -1,3 +1,4 @@
+// The go library used to communicate with Invisible Collector services
 package ic
 
 import (
@@ -39,10 +40,15 @@ type DebtListPair struct {
 	Error error
 }
 
+// The entry point for using this library.
+// Contains all the implemented API request by this library that are used to communicate with Invisible Collector
 type InvisibleCollector struct {
 	apiRequest
 }
 
+// Constructor for this class.
+//
+// Use your company API key. You can use the InvisibleCollectorUri constant to use the default Invisible Collector URI.
 func NewInvisibleCollector(apiKey string, apiUrl string) (*InvisibleCollector, error) {
 	requests, err := newApiRequest(apiKey, apiUrl)
 	if err != nil {
@@ -52,16 +58,21 @@ func NewInvisibleCollector(apiKey string, apiUrl string) (*InvisibleCollector, e
 	return &InvisibleCollector{*requests}, nil
 }
 
+// Get the company information.
 func (iC *InvisibleCollector) GetCompany(returnChannel chan<- CompanyPair) {
 
 	iC.makeCompanyRequest(returnChannel, http.MethodGet, []string{companiesPath}, nil, nil)
 }
 
+// Update company information.
+//
+// Only "address", "zipCode" and "city" can be changed. "name" and "vatNumber" are mandatory fields that are used for validation.
 func (iC *InvisibleCollector) SetCompany(returnChannel chan<- CompanyPair, companyUpdate Company) {
 
 	iC.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath}, &companyUpdate, []fieldNamer{CompanyName, CompanyVatNumber})
 }
 
+//
 func (iC *InvisibleCollector) SetCompanyNotifications(returnChannel chan<- CompanyPair, enableNotifications bool) {
 	var notificationsPath string
 	if enableNotifications {
