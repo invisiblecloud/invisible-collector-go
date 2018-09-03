@@ -72,7 +72,7 @@ func (iC *InvisibleCollector) SetCompany(returnChannel chan<- CompanyPair, compa
 	iC.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath}, &companyUpdate, []fieldNamer{CompanyName, CompanyVatNumber})
 }
 
-//
+// a
 func (iC *InvisibleCollector) SetCompanyNotifications(returnChannel chan<- CompanyPair, enableNotifications bool) {
 	var notificationsPath string
 	if enableNotifications {
