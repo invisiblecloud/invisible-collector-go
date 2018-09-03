@@ -76,7 +76,7 @@ type InvisibleCollector struct {
 // Constructor for this class.
 //
 // Use your company API key. You can use the InvisibleCollectorUri constant to use the default Invisible Collector URI.
-// Only http and https URI schemes are supported
+// Only http and https URI schemes are supported.
 func NewInvisibleCollector(apiKey string, apiUrl string) (*InvisibleCollector, error) {
 	requests, err := newApiRequest(apiKey, apiUrl)
 	if err != nil {
