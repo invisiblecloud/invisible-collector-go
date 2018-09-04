@@ -1,5 +1,8 @@
 package ic
 
+// Represent the Customer fields.
+//
+// Can be used as an argument in various methods related to field manipulation.
 const (
 	CustomerName       modelField = "name"
 	CustomerId         modelField = "gid"
@@ -13,10 +16,12 @@ const (
 	CustomerPhone      modelField = "phone"
 )
 
+// The customer model
 type Customer struct {
 	model
 }
 
+// The customer constructor
 func MakeCustomer() Customer {
 	return Customer{makeModel()}
 }
@@ -35,6 +40,9 @@ func (c *Customer) Name() string {
 	return c.getString(CustomerName)
 }
 
+// The external ID of the customer.
+//
+// A convenience construct that you can set with your own IDs. Can be sometimes used to identify the customer.
 func (c *Customer) SetExternalId(externalId string) {
 	c.fields[string(CustomerExternalId)] = externalId
 }
@@ -79,6 +87,7 @@ func (c *Customer) Country() string {
 	return c.getString(CustomerCountry)
 }
 
+// The country should be the ISO 3166-1 country code
 func (c *Customer) SetCountry(country string) {
 	c.fields[string(CustomerCountry)] = country
 }
@@ -103,10 +112,18 @@ func (c *Customer) Id() string {
 	return c.getString(CustomerId)
 }
 
+// Set the customer ID.
+//
+// This value is not sent but is used simply to identify the customer in invisible collector's database.
+// The "externalId" can only be used for this purpose in some circumstances (where you would use Customer.SetExternalId)
 func (c *Customer) SetId(id string) {
 	c.fields[string(CustomerId)] = id
 }
 
+// Represents the "routable" id of the customer
+//
+// Used for example in GET requests. It is the customer ID if it exists, if not it's the external id, if neither are present it's the string zero value.
+// Used in various InvisibleCollector methods related to customers, you should check each method where a simple customer ID string is needed if external ID are admissible to see wheter you can use this method.
 func (c *Customer) RoutableId() string {
 	id := c.Id()
 	if id == "" {
