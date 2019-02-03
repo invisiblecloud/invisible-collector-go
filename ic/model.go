@@ -3,7 +3,6 @@ package ic
 import (
 	"encoding/json"
 	"errors"
-
 	"time"
 )
 

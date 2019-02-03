@@ -2,7 +2,6 @@ package ic
 
 import (
 	"encoding/json"
-
 	"time"
 )
 
