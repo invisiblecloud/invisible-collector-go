@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 )
 
 const (
@@ -36,7 +37,7 @@ func TestGetCompany(t *testing.T) {
 	jsonStr := builder.buildJson()
 	returnModel := builder.buildReturnModel()
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", "/companies", nil)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", nil, "/companies", nil)
 	defer ts.Close()
 
 	assertCompanyRequest(t, ts.URL, returnModel,
@@ -51,7 +52,7 @@ func TestSetCompany(t *testing.T) {
 	requestModel := Company{builder.buildRequestModel()}
 	fragments := builder.getRequestJsonBits()
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", "/companies", fragments)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", fragments, "/companies", nil)
 	defer ts.Close()
 
 	assertCompanyRequest(t, ts.URL, returnModel,
@@ -64,7 +65,7 @@ func TestSetCompanyNotificationsEnable(t *testing.T) {
 	jsonStr := builder.buildJson()
 	returnModel := builder.buildReturnModel()
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", "/companies/enableNotifications", nil)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", nil, "/companies/enableNotifications", nil)
 	defer ts.Close()
 
 	assertCompanyRequest(t, ts.URL, returnModel,
@@ -77,7 +78,7 @@ func TestSetCompanyNotificationsDisable(t *testing.T) {
 	jsonStr := builder.buildJson()
 	returnModel := builder.buildReturnModel()
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", "/companies/disableNotifications", nil)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", nil, "/companies/disableNotifications", nil)
 	defer ts.Close()
 
 	assertCompanyRequest(t, ts.URL, returnModel,
@@ -171,7 +172,7 @@ func TestGetCustomer(t *testing.T) {
 	jsonStr := builder.buildJson()
 	returnModel := builder.buildReturnModel()
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", "/customers/"+id, nil)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", nil, "/customers/"+id, nil)
 	defer ts.Close()
 
 	assertCustomerRequest(t, ts.URL, returnModel,
@@ -186,7 +187,7 @@ func TestSetNewCustomer(t *testing.T) {
 	requestModel := Customer{builder.buildRequestModel()}
 	fragments := builder.getRequestJsonBits("gid")
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "POST", "/customers", fragments)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "POST", fragments, "/customers", nil)
 	defer ts.Close()
 
 	assertCustomerRequest(t, ts.URL, returnModel,
@@ -201,7 +202,7 @@ func TestSetCustomer(t *testing.T) {
 	requestModel := Customer{builder.buildRequestModel()}
 	fragments := builder.getRequestJsonBits("gid")
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", "/customers/"+id, fragments)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "PUT", fragments, "/customers/"+id, nil)
 	defer ts.Close()
 
 	assertCustomerRequest(t, ts.URL, returnModel,
@@ -217,7 +218,7 @@ func TestGetCustomerAttributes(t *testing.T) {
 	}
 	jsonStr := buildJson(attributes)
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", "/customers/"+id+"/attributes", nil)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", nil, "/customers/"+id+"/attributes", nil)
 	defer ts.Close()
 
 	assertCustomerAttributesRequest(t, ts.URL, attributes,
@@ -234,7 +235,7 @@ func TestSetCustomerAttributes(t *testing.T) {
 	jsonStr := buildJson(attributes)
 	jsonBits := []string{"go-attr-1", "go-val-1", "go-attr-2", "go-val-2"}
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "POST", "/customers/"+id+"/attributes", jsonBits)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "POST", jsonBits, "/customers/"+id+"/attributes", nil)
 	defer ts.Close()
 
 	assertCustomerAttributesRequest(t, ts.URL, attributes,
@@ -251,7 +252,7 @@ func TestSetNewDebt(t *testing.T) {
 	requestModel := Debt{builder.buildRequestModel()}
 	fragments := builder.getDebtRequestJsonBits("gid")
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "POST", "/debts", fragments)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "POST", fragments, "/debts", nil)
 	defer ts.Close()
 
 	assertDebtRequest(t, ts.URL, returnModel,
@@ -264,7 +265,7 @@ func TestGetDebt(t *testing.T) {
 	jsonStr := builder.buildDebtJson()
 	expectedReturnModel := builder.buildDebtReturnModel()
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", "/debts/"+id, nil)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", nil, "/debts/"+id, nil)
 	defer ts.Close()
 
 	assertDebtRequest(t, ts.URL, expectedReturnModel,
@@ -283,12 +284,49 @@ func TestGetCustomerDebts(t *testing.T) {
 
 	jsonStr := "[" + jsonDebt1 + "," + jsonDebt2 + "]"
 
-	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", "/customers/"+customerId+"/debts", nil)
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", nil, "/customers/"+customerId+"/debts", nil)
 	defer ts.Close()
 
 	collector := buildCollector(t, ts.URL)
 	ch := make(chan DebtListPair)
 	go collector.GetCustomerDebts(ch, customerId)
+	p := <-ch
+
+	assertCorrectReturnedData(t, []Debt{expectedDebt1, expectedDebt2}, p.Debts, p.Error)
+}
+
+func TestGetFindDebts(t *testing.T) {
+
+	builder, _ := buildTestDebtModelBuilder()
+	jsonDebt1 := builder.buildDebtJson()
+	expectedDebt1 := Debt{builder.buildDebtReturnModel()}
+
+	builder2, _ := buildTestAnotherDebtModelBuilder()
+	jsonDebt2 := builder2.buildDebtJson()
+	expectedDebt2 := Debt{builder2.buildDebtReturnModel()}
+
+	jsonStr := "[" + jsonDebt1 + "," + jsonDebt2 + "]"
+
+	findDebts := MakeFindDebts()
+	findDebts.SetNumber("1234")
+	findDebts.SetFieldToNil(FindDebtsToDueDate)
+	time := time.Date(
+		2016, 1, 1, 20, 34, 58, 651387237, time.UTC)
+	findDebts.SetToDate(time)
+
+	queries := map[string]string{
+		"number":     "1234",
+		"to_duedate": "",
+		"to_date":    "2016-01-01",
+	}
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", nil, "/debts/find", queries)
+	defer ts.Close()
+
+	collector := buildCollector(t, ts.URL)
+	ch := make(chan DebtListPair)
+
+	go collector.GetFindDebts(ch, findDebts)
 	p := <-ch
 
 	assertCorrectReturnedData(t, []Debt{expectedDebt1, expectedDebt2}, p.Debts, p.Error)
@@ -307,11 +345,19 @@ func buildBarebonesTestServerRequest(statusCode int, useContentTypeHeader bool, 
 	return httptest.NewServer(handler)
 }
 
-func buildAssertingTestServerRequest(t *testing.T, returnJson string, expectedMethod string, expectedUriPath string, expectedJsonBits []string) *httptest.Server {
+func buildAssertingTestServerRequest(t *testing.T, returnJson string, expectedMethod string, expectedJsonBits []string, expectedUriPath string, expectedQuery map[string]string) *httptest.Server {
 	const jsonMime = "application/json"
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, expectedUriPath, r.URL.Path)
+
+		if expectedQuery != nil {
+			for k, v := range expectedQuery {
+				query := k + "=" + v
+				assert.Contains(t, r.URL.RawQuery, query)
+			}
+		}
+
 		assert.Equal(t, expectedMethod, r.Method)
 
 		assert.Contains(t, r.Header.Get("Accept"), jsonMime)
