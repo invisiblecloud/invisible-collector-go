@@ -52,7 +52,8 @@ func (api *apiRequest) makeRequestExpectingJson(request *http.Request) (returnBo
 		return nil, clientErr
 	}
 
-	if response.StatusCode/100 != 2 {
+	family := response.StatusCode / 100
+	if family != 2 && family != 3 && family != 1 {
 		return nil, api.buildProtocolErrorMessage(response)
 	}
 
