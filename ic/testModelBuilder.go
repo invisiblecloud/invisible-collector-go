@@ -2,7 +2,7 @@ package ic
 
 import (
 	"encoding/json"
-	"github.com/invisiblecloud/invisible-collector-go/internal"
+
 	"time"
 )
 
@@ -32,7 +32,7 @@ func (m *testModelBuilder) buildJson() string {
 }
 
 func (m *testModelBuilder) buildDebtJson() string {
-	fieldsCopy := internal.MapCopy(m.fields)
+	fieldsCopy := mapCopy(m.fields)
 	if date, ok := fieldsCopy[string(DebtDate)]; ok && date != nil {
 		fieldsCopy[string(DebtDate)] = date.(time.Time).Format(dateFormat)
 	}
@@ -45,7 +45,7 @@ func (m *testModelBuilder) buildDebtJson() string {
 }
 
 func getJsonBits(m map[string]interface{}, excludeKeys ...string) []string {
-	clone := internal.MapCopy(m)
+	clone := mapCopy(m)
 	for _, key := range excludeKeys {
 		delete(clone, key)
 	}
@@ -70,7 +70,7 @@ func (m *testModelBuilder) getRequestJsonBits(excludeKeys ...string) []string {
 
 func (m *testModelBuilder) getDebtRequestJsonBits(excludeKeys ...string) []string {
 	bits := make([]string, 0)
-	clone := internal.MapCopy(m.fields)
+	clone := mapCopy(m.fields)
 	if attributes, ok := clone[string(DebtAttributes)]; ok && attributes != nil {
 		for k, v := range attributes.(map[string]string) {
 			bits = append(bits, k, v)
@@ -92,14 +92,14 @@ func (m *testModelBuilder) getDebtRequestJsonBits(excludeKeys ...string) []strin
 }
 
 func (m *testModelBuilder) buildReturnModel() model {
-	fieldsCopy := internal.MapCopy(m.fields)
-	internal.MapRemoveNils(fieldsCopy)
+	fieldsCopy := mapCopy(m.fields)
+	mapRemoveNils(fieldsCopy)
 	return model{fieldsCopy}
 }
 
 func (m *testModelBuilder) buildDebtReturnModel() model {
-	fieldsCopy := internal.MapCopy(m.fields)
-	internal.MapRemoveNils(fieldsCopy)
+	fieldsCopy := mapCopy(m.fields)
+	mapRemoveNils(fieldsCopy)
 
 	if items, ok := m.fields[string(DebtItems)]; ok && items != nil {
 		for _, item := range items.([]Item) {
@@ -111,7 +111,7 @@ func (m *testModelBuilder) buildDebtReturnModel() model {
 }
 
 func (m *testModelBuilder) buildRequestModel() model {
-	fieldsCopy := internal.MapCopy(m.fields)
+	fieldsCopy := mapCopy(m.fields)
 	return model{fieldsCopy}
 }
 

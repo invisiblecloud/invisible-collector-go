@@ -4,14 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/invisiblecloud/invisible-collector-go/internal"
+
 	"net/http"
 	"net/url"
 	"strings"
-)
-
-const (
-	jsonMime = "application/json"
 )
 
 type apiRequest struct {
@@ -38,7 +34,7 @@ func newApiRequest(apiKey string, apiUrl string) (*apiRequest, error) {
 
 	// TODO check if api key contains only ascii (for headers)
 
-	if internal.IsWhitespaceString(apiKey) {
+	if isWhitespaceString(apiKey) {
 		return nil, errors.New("invalid api key: " + apiKey)
 	}
 
@@ -60,17 +56,17 @@ func (api *apiRequest) makeJsonRequest(requestBody []byte, requestType string, p
 		return nil, api.buildProtocolErrorMessage(response)
 	}
 
-	if !internal.JsonContentType(&response.Header) {
+	if !jsonContentType(&response.Header) {
 		return nil, errors.New("returned content-type isn't json")
 	}
 
-	return internal.ReadCloseableBuffer(response.Body)
+	return readCloseableBuffer(response.Body)
 }
 
 func (api *apiRequest) joinPathFragments(pathSegments []string) (string, error) {
 	encodedPaths := make([]string, len(pathSegments))
 	for i, pathSegment := range pathSegments {
-		if internal.IsWhitespaceString(pathSegment) {
+		if isWhitespaceString(pathSegment) {
 			return "", errors.New("Invalid uri path segment: " + pathSegment)
 		}
 
@@ -109,11 +105,11 @@ func (api *apiRequest) buildRequest(requestType string, pathSegments []string, r
 func (api *apiRequest) buildProtocolErrorMessage(response *http.Response) error {
 	var httpError error = HttpStatusCodeError(response.StatusCode)
 
-	if internal.JsonContentType(&response.Header) {
-		if m, err := internal.BufferToMap(response.Body); err == nil {
-			statusCode := internal.MapGetValue(m, "code")
-			msg := internal.MapGetValue(m, "message")
-			id := internal.SliceFirstNonNil(internal.MapGetValue(m, "id"), internal.MapGetValue(m, "gid"))
+	if jsonContentType(&response.Header) {
+		if m, err := bufferToMap(response.Body); err == nil {
+			statusCode := mapGetValue(m, "code")
+			msg := mapGetValue(m, "message")
+			id := sliceFirstNonNil(mapGetValue(m, "id"), mapGetValue(m, "gid"))
 			if msg != nil && statusCode != nil {
 				errMsg := fmt.Sprintf("%v: %v", statusCode, msg)
 				if id != nil && response.StatusCode == 409 {

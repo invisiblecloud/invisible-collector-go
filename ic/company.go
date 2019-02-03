@@ -1,7 +1,5 @@
 package ic
 
-import "github.com/invisiblecloud/invisible-collector-go/internal"
-
 // Represent the Company fields.
 //
 // Can be used as an argument in various methods related to field manipulation.
@@ -84,7 +82,7 @@ func (c *Company) NotificationsEnabled() bool {
 }
 
 func (c Company) MarshalJSON() ([]byte, error) {
-	m := internal.MapSubmap(c.fields, string(CompanyName), string(CompanyVatNumber), string(CompanyAddress), string(CompanyZipCode), string(CompanyCity), string(CompanyCountry))
+	m := mapSubmap(c.fields, string(CompanyName), string(CompanyVatNumber), string(CompanyAddress), string(CompanyZipCode), string(CompanyCity), string(CompanyCountry))
 	return model{m}.MarshalJSON()
 }
 
