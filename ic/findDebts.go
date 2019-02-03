@@ -81,8 +81,12 @@ func (d *FindDebts) QueryParams() map[string]string {
 
 	for _, field := range []modelField{FindDebtsFromDate, FindDebtsToDate, FindDebtsFromDueDate, FindDebtsToDueDate} {
 		if d.ContainsField(field) {
-			date := d.getDate(field)
-			queries[string(field)] = date.Format(internal.DateFormat)
+			if d.FieldExists(field) {
+				date := d.getDate(field)
+				queries[string(field)] = date.Format(internal.DateFormat)
+			} else {
+				queries[string(field)] = ""
+			}
 		}
 	}
 
