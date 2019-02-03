@@ -45,12 +45,8 @@ func newApiRequest(apiKey string, apiUrl string) (*apiRequest, error) {
 	return &apiRequest{apiKey, *uri}, nil
 }
 
-func (api *apiRequest) makeJsonRequest(requestBody []byte, requestType string, pathSegments ...string) (returnBody []byte, err error) {
-	request, requestErr := api.buildRequest(requestType, pathSegments, requestBody)
-	if requestErr != nil {
-		return nil, requestErr
-	}
-
+// internal use
+func (api *apiRequest) makeRequestExpectingJson(request *http.Request) (returnBody []byte, err error) {
 	response, clientErr := httpClient.Do(request)
 	if clientErr != nil {
 		return nil, clientErr
@@ -65,6 +61,32 @@ func (api *apiRequest) makeJsonRequest(requestBody []byte, requestType string, p
 	}
 
 	return internal.ReadCloseableBuffer(response.Body)
+}
+
+func (api *apiRequest) makeJsonRequest(requestBody []byte, requestType string, pathSegments ...string) (returnBody []byte, err error) {
+	request, requestErr := api.buildRequest(requestType, pathSegments, requestBody)
+	if requestErr != nil {
+		return nil, requestErr
+	}
+
+	return api.makeRequestExpectingJson(request)
+}
+
+func (api *apiRequest) makeUrlEncodedRequest(queryParams map[string]string, requestType string, pathSegments ...string) (returnBody []byte, err error) {
+	request, requestErr := api.buildRequest(requestType, pathSegments, nil)
+	if requestErr != nil {
+		return nil, requestErr
+	}
+
+	if queryParams != nil && len(queryParams) != 0 {
+		query := request.URL.Query()
+		for k, v := range queryParams {
+			query.Add(k, v)
+		}
+		request.URL.RawQuery = query.Encode()
+	}
+
+	return api.makeRequestExpectingJson(request)
 }
 
 func (api *apiRequest) joinPathFragments(pathSegments []string) (string, error) {
