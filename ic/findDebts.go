@@ -1,6 +1,9 @@
 package ic
 
-import "time"
+import (
+	"github.com/invisiblecloud/invisible-collector-go/internal"
+	"time"
+)
 
 // Represent the FindDebts fields.
 //
@@ -79,7 +82,7 @@ func (d *FindDebts) QueryParams() map[string]string {
 	for _, field := range []modelField{FindDebtsFromDate, FindDebtsToDate, FindDebtsFromDueDate, FindDebtsToDueDate} {
 		if d.FieldExists(field) {
 			date := d.getDate(field)
-			queries[string(field)] = date.Format(dateFormat)
+			queries[string(field)] = date.Format(internal.DateFormat)
 		}
 	}
 

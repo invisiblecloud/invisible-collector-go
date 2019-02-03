@@ -34,11 +34,11 @@ func (m *testModelBuilder) buildJson() string {
 func (m *testModelBuilder) buildDebtJson() string {
 	fieldsCopy := internal.MapCopy(m.fields)
 	if date, ok := fieldsCopy[string(DebtDate)]; ok && date != nil {
-		fieldsCopy[string(DebtDate)] = date.(time.Time).Format(dateFormat)
+		fieldsCopy[string(DebtDate)] = date.(time.Time).Format(internal.DateFormat)
 	}
 
 	if date, ok := fieldsCopy[string(DebtDueDate)]; ok && date != nil {
-		fieldsCopy[string(DebtDueDate)] = date.(time.Time).Format(dateFormat)
+		fieldsCopy[string(DebtDueDate)] = date.(time.Time).Format(internal.DateFormat)
 	}
 
 	return buildJson(fieldsCopy)
@@ -54,7 +54,7 @@ func getJsonBits(m map[string]interface{}, excludeKeys ...string) []string {
 	for k, v := range clone {
 		switch val := v.(type) {
 		case time.Time:
-			ss = append(ss, k, val.Format(dateFormat))
+			ss = append(ss, k, val.Format(internal.DateFormat))
 		default:
 			vj, _ := json.Marshal(v)
 			ss = append(ss, k, string(vj))
