@@ -175,6 +175,13 @@ func (iC *InvisibleCollector) GetCustomerDebts(returnChannel chan<- DebtListPair
 	returnChannel <- DebtListPair{debts, err}
 }
 
+// Search for debts
+func (iC *InvisibleCollector) GetFindDebts(returnChannel chan<- DebtListPair, findDebts FindDebts) {
+	debts := make([]Debt, 0)
+	err := iC.makeQueryRequest(&debts, http.MethodGet, []string{debtsPath, "find"}, findDebts.QueryParams())
+	returnChannel <- DebtListPair{debts, err}
+}
+
 func (iC *InvisibleCollector) makeDebtRequest(returnChannel chan<- DebtPair, requestMethod string, pathFragments []string, requestDebt *Debt, debtMandatoryFields []fieldNamer, itemsMandatoryFields []fieldNamer) {
 
 	if requestDebt != nil && len(itemsMandatoryFields) != 0 {
@@ -229,6 +236,16 @@ func (iC *InvisibleCollector) makeModelRequest(returnModel Modeler, requestMetho
 	}
 
 	return iC.makeRequest(returnModel, requestMethod, pathFragments, requestModel)
+}
+
+func (iC *InvisibleCollector) makeQueryRequest(returnData interface{}, requestMethod string, pathFragments []string, queryParams map[string]string) error {
+
+	returnJson, requestErr := iC.makeUrlEncodedRequest(queryParams, requestMethod, pathFragments...)
+	if requestErr != nil {
+		return requestErr
+	}
+
+	return json.Unmarshal(returnJson, returnData)
 }
 
 func (iC *InvisibleCollector) makeRequest(returnData interface{}, requestMethod string, pathFragments []string, requestData interface{}) error {
