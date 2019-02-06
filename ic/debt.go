@@ -2,7 +2,6 @@ package ic
 
 import (
 	"encoding/json"
-	"github.com/invisiblecloud/invisible-collector-go/internal"
 	"time"
 )
 
@@ -254,7 +253,7 @@ func (d *Debt) items() []Item {
 
 func (d *Debt) tryUnformatDateString(field modelField) (err error) {
 	if d.FieldExists(field) {
-		d.fields[string(field)], err = time.Parse(internal.DateFormat, d.getString(field))
+		d.fields[string(field)], err = time.Parse(DateFormat, d.getString(field))
 	}
 
 	return
@@ -262,6 +261,6 @@ func (d *Debt) tryUnformatDateString(field modelField) (err error) {
 
 func (d *Debt) tryFormatDateString(field modelField) {
 	if d.FieldExists(field) {
-		d.fields[string(field)] = d.getDate(field).Format(internal.DateFormat)
+		d.fields[string(field)] = d.getDate(field).Format(DateFormat)
 	}
 }

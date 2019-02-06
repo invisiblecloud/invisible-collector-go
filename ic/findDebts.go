@@ -1,7 +1,6 @@
 package ic
 
 import (
-	"github.com/invisiblecloud/invisible-collector-go/internal"
 	"time"
 )
 
@@ -83,7 +82,7 @@ func (d *FindDebts) QueryParams() map[string]string {
 		if d.ContainsField(field) {
 			if d.FieldExists(field) {
 				date := d.getDate(field)
-				queries[string(field)] = date.Format(internal.DateFormat)
+				queries[string(field)] = date.Format(DateFormat)
 			} else {
 				queries[string(field)] = ""
 			}

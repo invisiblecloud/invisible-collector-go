@@ -1,4 +1,4 @@
-package ic_test
+package invisible_collector_go_test
 
 import (
 	"fmt"
