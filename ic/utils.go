@@ -9,7 +9,10 @@ import (
 	"strings"
 )
 
-const jsonMime = "application/json"
+const (
+	DateFormat = "2006-01-02" //time.Time to string format
+	jsonMime   = "application/json"
+)
 
 func isWhitespaceString(value string) bool {
 	return len(strings.TrimSpace(value)) == 0

@@ -37,6 +37,14 @@ func (m *model) FieldExists(field fieldNamer) bool {
 	return m.getField(field.(modelField)) != nil
 }
 
+// Check wheter the specified field has been set
+//
+// return true if field contains a value or nil
+func (m *model) ContainsField(field fieldNamer) bool {
+	_, ok := m.fields[field.fieldName()]
+	return ok
+}
+
 // Set the specified field to nil.
 //
 // The field if set to nil will be set if it isn't set. A "null" json value will be sent for this field in any seding api request.
