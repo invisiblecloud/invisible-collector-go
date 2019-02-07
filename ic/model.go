@@ -3,7 +3,6 @@ package ic
 import (
 	"encoding/json"
 	"errors"
-	"github.com/invisiblecloud/invisible-collector-go/internal"
 	"time"
 )
 
@@ -92,11 +91,11 @@ func (m *model) AssertHasFields(requiredFields []fieldNamer) error {
 }
 
 func (m *model) unsetNilFields() {
-	internal.MapRemoveNils(m.fields)
+	mapRemoveNils(m.fields)
 }
 
 func (m *model) getField(fieldName modelField) interface{} {
-	return internal.MapGetValue(m.fields, string(fieldName))
+	return mapGetValue(m.fields, string(fieldName))
 }
 
 func (m *model) getString(fieldName modelField) string {

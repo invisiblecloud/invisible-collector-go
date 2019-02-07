@@ -1,7 +1,6 @@
 package ic
 
 import (
-	"github.com/invisiblecloud/invisible-collector-go/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -368,7 +367,7 @@ func buildAssertingTestServerRequest(t *testing.T, returnJson string, expectedMe
 			assert.Contains(t, r.Header.Get("Content-Type"), jsonMime)
 			assert.Contains(t, r.Header.Get("Content-Type"), "utf-8")
 
-			bodyBytes, _ := internal.ReadCloseableBuffer(r.Body)
+			bodyBytes, _ := readCloseableBuffer(r.Body)
 			bodyString := string(bodyBytes)
 			for _, js := range expectedJsonBits {
 				assert.Contains(t, bodyString, js)

@@ -1,4 +1,4 @@
-package internal
+package ic
 
 import (
 	"bytes"
@@ -14,11 +14,11 @@ const (
 	jsonMime   = "application/json"
 )
 
-func IsWhitespaceString(value string) bool {
+func isWhitespaceString(value string) bool {
 	return len(strings.TrimSpace(value)) == 0
 }
 
-func ReadCloseableBuffer(buffer io.ReadCloser) ([]byte, error) {
+func readCloseableBuffer(buffer io.ReadCloser) ([]byte, error) {
 	byteBuffer := bytes.Buffer{}
 	if _, err := byteBuffer.ReadFrom(buffer); err != nil {
 		return nil, err
@@ -31,8 +31,8 @@ func ReadCloseableBuffer(buffer io.ReadCloser) ([]byte, error) {
 	return byteBuffer.Bytes(), nil
 }
 
-func BufferToMap(buffer io.ReadCloser) (map[string]interface{}, error) {
-	if b, err := ReadCloseableBuffer(buffer); err != nil {
+func bufferToMap(buffer io.ReadCloser) (map[string]interface{}, error) {
+	if b, err := readCloseableBuffer(buffer); err != nil {
 		return nil, err
 	} else {
 		m := make(map[string]interface{})
@@ -45,6 +45,6 @@ func BufferToMap(buffer io.ReadCloser) (map[string]interface{}, error) {
 	}
 }
 
-func JsonContentType(header *http.Header) bool {
+func jsonContentType(header *http.Header) bool {
 	return strings.Contains(header.Get("Content-Type"), jsonMime)
 }
