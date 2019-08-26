@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"testing"
 	"time"
@@ -344,10 +345,13 @@ func TestGetFindCustomers(t *testing.T) {
 	findCustomers := MakeFindCustomer()
 	findCustomers.SetVatNumber("1234")
 	findCustomers.SetPhone("920")
+	findCustomers.SetEmail("abc@gmail.com")
 
 	queries := map[string]string{
 		"vat":   "1234",
 		"phone": "920",
+		"email": url.QueryEscape("abc@gmail.com"),
+		// externaldId missing on purpose
 	}
 
 	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", nil, "/customers/find", queries)
