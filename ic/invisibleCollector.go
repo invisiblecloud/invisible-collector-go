@@ -64,6 +64,15 @@ type DebtListPair struct {
 	Error error
 }
 
+// Returned by any InvisibleCollector.GetFindCustomers()
+//
+// In case of a successful method request the Customers field contains the up-to-date list of customers and Error is nil,
+// in case of error Error is non nil and Customers is in a invalid state.
+type CustomerListPair struct {
+	Customers []Customer
+	Error     error
+}
+
 // The entry point for using this library.
 // Contains all the implemented API request by this library that are used to communicate with Invisible Collector.
 //
@@ -180,6 +189,13 @@ func (iC *InvisibleCollector) GetFindDebts(returnChannel chan<- DebtListPair, fi
 	debts := make([]Debt, 0)
 	err := iC.makeQueryRequest(&debts, http.MethodGet, []string{debtsPath, "find"}, findDebts.QueryParams())
 	returnChannel <- DebtListPair{debts, err}
+}
+
+// Search for customers
+func (iC *InvisibleCollector) GetFindCustomers(returnChannel chan<- CustomerListPair, findCustomers FindCustomers) {
+	customers := make([]Customer, 0)
+	err := iC.makeQueryRequest(&customers, http.MethodGet, []string{customersPath, "find"}, findCustomers.AsStringMap())
+	returnChannel <- CustomerListPair{customers, err}
 }
 
 func (iC *InvisibleCollector) makeDebtRequest(returnChannel chan<- DebtPair, requestMethod string, pathFragments []string, requestDebt *Debt) {

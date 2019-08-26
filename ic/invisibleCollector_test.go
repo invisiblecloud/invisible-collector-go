@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"testing"
 	"time"
@@ -329,6 +330,40 @@ func TestGetFindDebts(t *testing.T) {
 	p := <-ch
 
 	assertCorrectReturnedData(t, []Debt{expectedDebt1, expectedDebt2}, p.Debts, p.Error)
+}
+
+func TestGetFindCustomers(t *testing.T) {
+
+	builder, _ := buildTestCustomerModelBuilder()
+	expectedCust1 := Customer{builder.buildReturnModel()}
+
+	builder2, _ := buildTestAnotherCustomerModelBuilder()
+	expectedCust2 := Customer{builder2.buildReturnModel()}
+
+	jsonStr := "[" + builder.buildJson() + "," + builder2.buildJson() + "]"
+
+	findCustomers := MakeFindCustomer()
+	findCustomers.SetVatNumber("1234")
+	findCustomers.SetPhone("920")
+	findCustomers.SetEmail("abc@gmail.com")
+
+	queries := map[string]string{
+		"vat":   "1234",
+		"phone": "920",
+		"email": url.QueryEscape("abc@gmail.com"),
+		// externaldId missing on purpose
+	}
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", nil, "/customers/find", queries)
+	defer ts.Close()
+
+	collector := buildCollector(t, ts.URL)
+	ch := make(chan CustomerListPair)
+
+	go collector.GetFindCustomers(ch, findCustomers)
+	p := <-ch
+
+	assertCorrectReturnedData(t, []Customer{expectedCust1, expectedCust2}, p.Customers, p.Error)
 }
 
 func buildBarebonesTestServerRequest(statusCode int, useContentTypeHeader bool, returnJson string) *httptest.Server {
