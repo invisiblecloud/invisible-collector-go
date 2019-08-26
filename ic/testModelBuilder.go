@@ -137,6 +137,19 @@ func buildTestCustomerModelBuilder() (m *testModelBuilder, id string) {
 	return
 }
 
+func buildTestAnotherCustomerModelBuilder() (m *testModelBuilder, id string) {
+	m = makeTestModelBuilder()
+
+	id = "adad2"
+	m.setField(string(CustomerName), "test-name2")
+	m.setField(string(CustomerVatNumber), "12345")
+	m.setField(string(CustomerCountry), "PT")
+	m.setField(string(CustomerCity), nil)
+	m.setField(string(CustomerId), id)
+
+	return
+}
+
 func buildTestDebtModelBuilder() (m *testModelBuilder, id string) {
 	m = makeTestModelBuilder()
 
