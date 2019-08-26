@@ -331,6 +331,37 @@ func TestGetFindDebts(t *testing.T) {
 	assertCorrectReturnedData(t, []Debt{expectedDebt1, expectedDebt2}, p.Debts, p.Error)
 }
 
+func TestGetFindCustomers(t *testing.T) {
+
+	builder, _ := buildTestCustomerModelBuilder()
+	expectedCust1 := Customer{builder.buildReturnModel()}
+
+	builder2, _ := buildTestAnotherCustomerModelBuilder()
+	expectedCust2 := Customer{builder2.buildReturnModel()}
+
+	jsonStr := "[" + builder.buildJson() + "," + builder2.buildJson() + "]"
+
+	findCustomers := MakeFindCustomer()
+	findCustomers.SetVatNumber("1234")
+	findCustomers.SetPhone("920")
+
+	queries := map[string]string{
+		"vat":   "1234",
+		"phone": "920",
+	}
+
+	ts := buildAssertingTestServerRequest(t, jsonStr, "GET", nil, "/customers/find", queries)
+	defer ts.Close()
+
+	collector := buildCollector(t, ts.URL)
+	ch := make(chan CustomerListPair)
+
+	go collector.GetFindCustomers(ch, findCustomers)
+	p := <-ch
+
+	assertCorrectReturnedData(t, []Customer{expectedCust1, expectedCust2}, p.Customers, p.Error)
+}
+
 func buildBarebonesTestServerRequest(statusCode int, useContentTypeHeader bool, returnJson string) *httptest.Server {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
