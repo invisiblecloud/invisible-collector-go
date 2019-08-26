@@ -98,7 +98,7 @@ func NewInvisibleCollector(apiKey string, apiUrl string) (*InvisibleCollector, e
 // Get the company information.
 func (iC *InvisibleCollector) GetCompany(returnChannel chan<- CompanyPair) {
 
-	iC.makeCompanyRequest(returnChannel, http.MethodGet, []string{companiesPath}, nil, nil)
+	iC.makeCompanyRequest(returnChannel, http.MethodGet, []string{companiesPath}, nil)
 }
 
 // Update company information.
@@ -106,7 +106,7 @@ func (iC *InvisibleCollector) GetCompany(returnChannel chan<- CompanyPair) {
 // Only "address", "zipCode" and "city" can be changed. "name" and "vatNumber" are mandatory fields that are used for validation. You can use GetCompany first to get the validation fields.
 func (iC *InvisibleCollector) SetCompany(returnChannel chan<- CompanyPair, companyUpdate Company) {
 
-	iC.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath}, &companyUpdate, []fieldNamer{CompanyName, CompanyVatNumber})
+	iC.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath}, &companyUpdate)
 }
 
 // Enable or disable company notifications
@@ -120,14 +120,14 @@ func (iC *InvisibleCollector) SetCompanyNotifications(returnChannel chan<- Compa
 		notificationsPath = "disableNotifications"
 	}
 
-	iC.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath, notificationsPath}, nil, nil)
+	iC.makeCompanyRequest(returnChannel, http.MethodPut, []string{companiesPath, notificationsPath}, nil)
 }
 
 // Create a new customer
 //
 // "name", "vatNumber" and "country" are mandatory fields
 func (iC *InvisibleCollector) SetNewCustomer(returnChannel chan<- CustomerPair, newCustomer Customer) {
-	iC.makeCustomerRequest(returnChannel, http.MethodPost, []string{customersPath}, &newCustomer, []fieldNamer{CustomerName, CustomerVatNumber, CustomerCountry})
+	iC.makeCustomerRequest(returnChannel, http.MethodPost, []string{customersPath}, &newCustomer)
 }
 
 // Update customer.
@@ -137,14 +137,14 @@ func (iC *InvisibleCollector) SetNewCustomer(returnChannel chan<- CustomerPair, 
 //
 // "country" is a mandatory field
 func (iC *InvisibleCollector) SetCustomer(returnChannel chan<- CustomerPair, updatedCustomer Customer) {
-	iC.makeCustomerRequest(returnChannel, http.MethodPut, []string{customersPath, updatedCustomer.RoutableId()}, &updatedCustomer, []fieldNamer{CustomerCountry})
+	iC.makeCustomerRequest(returnChannel, http.MethodPut, []string{customersPath, updatedCustomer.RoutableId()}, &updatedCustomer)
 }
 
 // Get customer information
 //
 // customerId can be either the ID ("gid") or external ID ("externalId").
 func (iC *InvisibleCollector) GetCustomer(returnChannel chan<- CustomerPair, customerId string) {
-	iC.makeCustomerRequest(returnChannel, http.MethodGet, []string{customersPath, customerId}, nil, nil)
+	iC.makeCustomerRequest(returnChannel, http.MethodGet, []string{customersPath, customerId}, nil)
 }
 
 // Set the customer's attributes.
@@ -168,12 +168,12 @@ func (iC *InvisibleCollector) GetCustomerAttributes(returnChannel chan<- Attribu
 //
 // newDebt's "number", "customerId", "type", "date" and "dueDate" are mandatory. If the debt contains Items their "name" field is mandatory.
 func (iC *InvisibleCollector) SetNewDebt(returnChannel chan<- DebtPair, newDebt Debt) {
-	iC.makeDebtRequest(returnChannel, http.MethodPost, []string{debtsPath}, &newDebt, []fieldNamer{DebtNumber, DebtCustomerId, DebtType, DebtDate, DebtDueDate}, []fieldNamer{ItemName})
+	iC.makeDebtRequest(returnChannel, http.MethodPost, []string{debtsPath}, &newDebt)
 }
 
 // Get a debt by the debt's id.
 func (iC *InvisibleCollector) GetDebt(returnChannel chan<- DebtPair, debtId string) {
-	iC.makeDebtRequest(returnChannel, http.MethodGet, []string{debtsPath, debtId}, nil, nil, nil)
+	iC.makeDebtRequest(returnChannel, http.MethodGet, []string{debtsPath, debtId}, nil)
 }
 
 // Get all of the customer's debts.
@@ -198,14 +198,7 @@ func (iC *InvisibleCollector) GetFindCustomers(returnChannel chan<- CustomerList
 	returnChannel <- CustomerListPair{customers, err}
 }
 
-func (iC *InvisibleCollector) makeDebtRequest(returnChannel chan<- DebtPair, requestMethod string, pathFragments []string, requestDebt *Debt, debtMandatoryFields []fieldNamer, itemsMandatoryFields []fieldNamer) {
-
-	if requestDebt != nil && len(itemsMandatoryFields) != 0 {
-		if err := requestDebt.AssertItemsHaveFields(itemsMandatoryFields); err != nil {
-			returnChannel <- DebtPair{Debt{}, nil}
-			return
-		}
-	}
+func (iC *InvisibleCollector) makeDebtRequest(returnChannel chan<- DebtPair, requestMethod string, pathFragments []string, requestDebt *Debt) {
 
 	var requestModel Modeler = nil
 	if requestDebt != nil {
@@ -213,7 +206,7 @@ func (iC *InvisibleCollector) makeDebtRequest(returnChannel chan<- DebtPair, req
 	}
 
 	debt := Debt{}
-	err := iC.makeModelRequest(&debt, requestMethod, pathFragments, requestModel, debtMandatoryFields)
+	err := iC.makeRequest(&debt, requestMethod, pathFragments, requestModel)
 	returnChannel <- DebtPair{debt, err}
 }
 
@@ -229,29 +222,18 @@ func (iC *InvisibleCollector) makeAttributesRequest(returnChannel chan<- Attribu
 	returnChannel <- AttributesPair{attributes, err}
 }
 
-func (iC *InvisibleCollector) makeCustomerRequest(returnChannel chan<- CustomerPair, requestMethod string, pathFragments []string, requestModel Modeler, mandatoryFields []fieldNamer) {
+func (iC *InvisibleCollector) makeCustomerRequest(returnChannel chan<- CustomerPair, requestMethod string, pathFragments []string, requestModel Modeler) {
 
 	customer := Customer{}
-	err := iC.makeModelRequest(&customer, requestMethod, pathFragments, requestModel, mandatoryFields)
+	err := iC.makeRequest(&customer, requestMethod, pathFragments, requestModel)
 	returnChannel <- CustomerPair{customer, err}
 }
 
-func (iC *InvisibleCollector) makeCompanyRequest(returnChannel chan<- CompanyPair, requestMethod string, pathFragments []string, requestModel Modeler, mandatoryFields []fieldNamer) {
+func (iC *InvisibleCollector) makeCompanyRequest(returnChannel chan<- CompanyPair, requestMethod string, pathFragments []string, requestModel Modeler) {
 
 	company := Company{}
-	err := iC.makeModelRequest(&company, requestMethod, pathFragments, requestModel, mandatoryFields)
+	err := iC.makeRequest(&company, requestMethod, pathFragments, requestModel)
 	returnChannel <- CompanyPair{company, err}
-}
-
-func (iC *InvisibleCollector) makeModelRequest(returnModel Modeler, requestMethod string, pathFragments []string, requestModel Modeler, mandatoryFields []fieldNamer) error {
-
-	if requestModel != nil {
-		if fieldErr := requestModel.AssertHasFields(mandatoryFields); fieldErr != nil {
-			return fieldErr
-		}
-	}
-
-	return iC.makeRequest(returnModel, requestMethod, pathFragments, requestModel)
 }
 
 func (iC *InvisibleCollector) makeQueryRequest(returnData interface{}, requestMethod string, pathFragments []string, queryParams map[string]string) error {
